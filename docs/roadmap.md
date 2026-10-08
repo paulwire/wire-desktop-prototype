@@ -56,13 +56,14 @@ New slices should use the [slice issue template](../.github/ISSUE_TEMPLATE/slice
 
 **Acceptance criteria**:
 - On app start, `data` checks `GlobalKaliumScope`'s persisted account list before showing any screen.
-- If a persisted account exists, `data` restores its `UserSessionScope` and `presentation`/`ui` start in the logged-in state.
-- If none exists (or restore fails), the user lands on the login screen from slice 2.
+- A persisted account alone is not sufficient: `getSessionScope(userId)` doesn't itself validate that the session is still authenticated (it can return a scope for an account whose tokens are expired or server-revoked). `data` must confirm the session is actually valid — not just present — before declaring the user logged in.
+- If a persisted account exists and is confirmed valid, `data` restores its `UserSessionScope` and `presentation`/`ui` start in the logged-in state.
+- If none exists, restore fails, or the persisted account turns out to be invalid, the user lands on the login screen from slice 2 (not a crash or a silently broken logged-in UI).
 - Closing and relaunching the app after a slice-2 login demonstrates this without a fresh login prompt.
 
-**Kalium APIs involved**: `CoreLogic.getGlobalScope()` / `GlobalKaliumScope`'s account list, `CoreLogic.getSessionScope(userId)`.
+**Kalium APIs involved**: `CoreLogic.getGlobalScope()` / `GlobalKaliumScope`'s account list, `CoreLogic.getSessionScope(userId)`, plus whatever Kalium exposes for checking session/token validity (exact API TBD — look at what `cli`'s session-restore path, if any, does to confirm validity rather than trusting account presence).
 
-**What to test**: Unit test for the `data`-layer "restore vs. require login" decision logic, faking "account present" vs. "no account" states — inject time/dispatchers rather than relying on real I/O timing, per AGENTS.md.
+**What to test**: Unit test for the `data`-layer "restore vs. require login" decision logic, faking "account present and valid", "account present but invalid", and "no account" states — inject time/dispatchers rather than relying on real I/O timing, per AGENTS.md.
 
 **Out of scope**: Multi-account switching (out of scope for v1 generally). Gracefully handling a corrupted/partial local DB — treat as "no session" for now and log it.
 
@@ -70,8 +71,8 @@ New slices should use the [slice issue template](../.github/ISSUE_TEMPLATE/slice
 
 ## Later slices (one-line each, to be expanded with the full template when picked up)
 
-4. **Conversations list screen** — fetch and display conversations (`GetConversationsUseCase`/observe variant).
-5. **Open a conversation** — show its recent messages (`GetRecentMessagesUseCase`).
+4. **Conversations list screen** — start sync (`syncExecutor.request { keepSyncAlwaysOn() }`, from slice 1/2) and fetch/display conversations (`GetConversationsUseCase`/observe variant); without an active sync these are DB-backed flows that stay empty, not a live network fetch.
+5. **Open a conversation** — show its recent messages (`GetRecentMessagesUseCase`), same sync-must-be-running caveat as slice 4.
 6. **Send a text message** — `SendTextMessageUseCase`, appended to the open conversation's view.
 7. **Live updates** — switch one-shot fetches to the Observe* flows so new messages/conversations appear without manual refresh.
 8. **Self user display** — show the logged-in user's name/handle (`GetSelfUserUseCase`/observe variant).
