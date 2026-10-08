@@ -1,0 +1,12 @@
+complexity:
+  LongMethod:
+    active: true
+    threshold: 40
+  LargeClass:
+    active: true
+    threshold: 300
+
+naming:
+  FunctionNaming:
+    active: true
+    ignoreAnnotated: ['Composable']

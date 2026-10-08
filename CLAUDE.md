@@ -2,6 +2,10 @@
 
 A Compose Multiplatform desktop client prototype, built against Wire's Kalium SDK `logic` module for messaging, encryption, and backend communication. The UI is Kotlin/Compose for Desktop (JVM); business logic is delegated to Kalium rather than reimplemented in this repo.
 
+@AGENTS.md
+
+Follow AGENTS.md — it is the single source of truth for architecture, size limits, testing, and hygiene standards, for both writing and reviewing code in this repo.
+
 ## Working rules
 
 - **One branch per task.** Never commit directly to `main`. Create a branch per unit of work and open a PR from it.
@@ -12,8 +16,7 @@ A Compose Multiplatform desktop client prototype, built against Wire's Kalium SD
 ## Project structure
 
 - Gradle/Kotlin project using the Compose Multiplatform Gradle plugin, desktop (JVM) target only for now.
-- `src/main/kotlin` — application source.
-- `app/` — the Compose Desktop application module entry point.
+- `src/main/kotlin` — application source, split into `ui`, `presentation`, and `data` packages per AGENTS.md.
 
 ## License
 
