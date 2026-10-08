@@ -17,11 +17,12 @@ Follow AGENTS.md — it is the single source of truth for architecture, size lim
 
 After opening a PR:
 
-1. Run `./scripts/codex-review.sh` to get an independent Codex review against the Code Review Rules in AGENTS.md.
-2. Post the result as a PR comment titled "Codex review" using `gh pr comment`.
-3. Fix every valid P0 and P1 finding, then push.
-4. Re-run the review and repeat until no P0 or P1 findings remain.
-5. Report back which findings were fixed and which were disagreed with, and why.
+1. Run `./scripts/codex-review.sh` — it reviews the branch against the Code Review Rules in AGENTS.md, posts the result as a PR comment titled "Codex review", and saves it to `review.md`.
+2. Read `review.md` and fix every valid P0 and P1 finding, then push.
+3. Re-run the review and repeat until no P0 or P1 findings remain.
+4. Report back which findings were fixed and which were disagreed with, and why.
+
+Claude never posts or edits PR review comments itself — that's the script's job, using Codex's own output.
 
 ## Project structure
 

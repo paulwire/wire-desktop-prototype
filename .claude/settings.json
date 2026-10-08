@@ -13,7 +13,6 @@
       "Bash(gh pr view *)",
       "Bash(gh pr list*)",
       "Bash(./scripts/codex-review.sh*)",
-      "Bash(gh pr comment *)",
       "Bash(gh pr checks *)"
     ],
     "ask": [

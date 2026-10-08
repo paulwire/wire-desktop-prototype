@@ -9,3 +9,8 @@ codex exec \
   --sandbox read-only \
   --output-last-message review.md \
   "$PROMPT"
+
+{
+  printf '## Codex review\n\n'
+  cat review.md
+} | gh pr comment --body-file -
