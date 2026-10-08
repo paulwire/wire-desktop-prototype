@@ -22,7 +22,7 @@ New slices should use the [slice issue template](../.github/ISSUE_TEMPLATE/slice
 
 **Kalium APIs involved**: `CoreLogic`, `fetchServerConfigFromDeepLink`, `AuthenticationScope.login`, `CoreLogic.globalScope { addAuthenticatedAccount(...) }`, `CoreLogic.getSessionScope(userId)`, client/key-package registration APIs (exact classes TBD by this spike).
 
-**What to test**: No automated tests required for the spike itself — this is root build-script/tooling-level exploration, covered by AGENTS.md's testing exemption for that category. Manual verification only, written up as findings.
+**What to test**: No automated tests for this slice — the harness is throwaway exploration code, not merged into `src/`, so AGENTS.md's per-class unit test rule doesn't apply to it (that rule governs committed `presentation`/`data` classes, not disposable spike code). Manual verification only, written up as findings.
 
 **Out of scope**: Any UI. MLS edge cases beyond "login succeeds on this one team" (external join, key package exhaustion/rotation). Calling.
 
@@ -75,5 +75,5 @@ New slices should use the [slice issue template](../.github/ISSUE_TEMPLATE/slice
 6. **Send a text message** — `SendTextMessageUseCase`, appended to the open conversation's view.
 7. **Live updates** — switch one-shot fetches to the Observe* flows so new messages/conversations appear without manual refresh.
 8. **Self user display** — show the logged-in user's name/handle (`GetSelfUserUseCase`/observe variant).
-9. **Logout** — tear down the session (`deleteSessionScope`) and return to login.
+9. **Logout** — invoke Kalium's `LogoutUseCase` (invalidates the session server-side and clears local client/session data, unlike `deleteSessionScope` alone, which only tears down the in-memory scope) and return to login.
 10. *(stretch)* **Basic connectivity/error state** surfaced in the UI — still desktop/JVM-only, no protocol changes.
