@@ -1,0 +1,29 @@
+# Gradle
+.gradle/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Kotlin / Compose Multiplatform
+.kotlin/
+kotlin-js-store/
+*.hprof
+
+# IDE - IntelliJ / Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# IDE - VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Local environment / secrets
+local.properties
+.env
