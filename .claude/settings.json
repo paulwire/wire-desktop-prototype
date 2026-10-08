@@ -17,7 +17,11 @@
       "Bash(./scripts/codex-review.sh*)",
       "Bash(gh pr checks *)",
       "Bash(codex --version)",
-      "Bash(codex * --help)",
+      "Bash(codex --help)",
+      "Bash(codex exec --help)",
+      "Bash(codex debug --help)",
+      "Bash(codex execpolicy --help)",
+      "Bash(codex execpolicy check --help)",
       "Bash(codex execpolicy check *)",
       "Bash(chmod +x scripts/*)"
     ],
