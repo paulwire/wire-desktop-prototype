@@ -39,9 +39,6 @@
       "Bash(rm -rf *)",
       "Read(./.env*)",
       "Bash(gh repo delete *)"
-    ],
-    "additionalDirectories": [
-      "../kalium"
     ]
   }
 }

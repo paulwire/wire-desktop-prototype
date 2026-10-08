@@ -25,6 +25,24 @@ After opening a PR:
 
 Claude never posts or edits PR review comments itself — that's the script's job, using Codex's own output.
 
+## Reference directories
+
+Sibling repos cloned alongside this one (e.g. `../kalium`, Wire's Kotlin Multiplatform SDK) may be used as read-only reference material, but must never be added to the shared `.claude/settings.json`: under `acceptEdits`, listing a directory in `additionalDirectories` there grants automatic write access to it for every developer. Instead, add both the grant and its protection together to your own gitignored `.claude/settings.local.json`:
+
+```json
+{
+  "permissions": {
+    "additionalDirectories": ["../kalium"],
+    "deny": [
+      "Edit(//absolute/path/to/kalium/**)",
+      "Write(//absolute/path/to/kalium/**)"
+    ]
+  }
+}
+```
+
+Use an absolute (`//...`) path for the deny rules — relative patterns can't use `..` to escape the project root, so a relative pattern here would silently never match.
+
 ## Project structure
 
 - Gradle/Kotlin project using the Compose Multiplatform Gradle plugin, desktop (JVM) target only for now.
