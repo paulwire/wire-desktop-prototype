@@ -10,10 +10,16 @@
       "Bash(git commit *)",
       "Bash(git checkout *)",
       "Bash(git push origin *)",
+      "Bash(git push)",
+      "Bash(git push -u origin *)",
       "Bash(gh pr view *)",
       "Bash(gh pr list*)",
       "Bash(./scripts/codex-review.sh*)",
-      "Bash(gh pr checks *)"
+      "Bash(gh pr checks *)",
+      "Bash(codex --version)",
+      "Bash(codex * --help)",
+      "Bash(codex execpolicy check *)",
+      "Bash(chmod +x scripts/*)"
     ],
     "ask": [
       "Bash(gh pr create *)",
