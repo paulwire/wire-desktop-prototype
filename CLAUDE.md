@@ -12,6 +12,7 @@ Follow AGENTS.md — it is the single source of truth for architecture, size lim
 - **Small PRs.** Scope each PR to a single task or fix. Prefer several small, reviewable PRs over one large one.
 - **Never commit secrets.** No API keys, tokens, credentials, or `local.properties`-style config. If something needs a secret, it belongs in an ignored local file or env var, never in source.
 - **Build before opening a PR.** Run the Gradle build locally and confirm it succeeds before pushing and opening a PR. A PR should never be opened against a known-broken build.
+- To read or search files, use your built-in Read, Grep and Glob tools rather than shell commands like cat, grep, find or ls.
 
 ## PR workflow
 
