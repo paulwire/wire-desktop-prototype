@@ -4,9 +4,9 @@ Notes taken from `../kalium/README.md` ahead of integrating Kalium's `logic` mod
 
 ## Module layering
 
-Kalium is split into many Gradle modules, with `logic` sitting at the top as the orchestration layer: it depends on `data`, `network`, `network-util`, `cryptography`, `persistence`, `calling`, `cells`, `backup`, `protobuf`, `util`, `common`, and `logger`. Everything below `logic` is an implementation detail of the SDK.
+Kalium is split into many Gradle modules, with `logic` sitting at the top as the orchestration layer: it depends on `data`, `network`, `network-util`, `cryptography`, `persistence`, `calling`, `cells`, `backup`, `protobuf`, `util`, `common`, and `logger`.
 
-This matches the boundary already drawn in [AGENTS.md](../AGENTS.md): this repo's `data` layer should only ever import Kalium's `logic` module, never reach past it into `network`, `persistence`, `cryptography`, etc. directly. `logic` is the one supported entry point.
+This matches the boundary already drawn in [AGENTS.md](../AGENTS.md): this repo's `data` layer should only ever import Kalium's `logic` module, never reach past it into `network`, `persistence`, `cryptography`, etc. directly. `logic` is the one supported entry point — note that its public API does transitively expose some lower-module types (e.g. use cases returning `Either<CoreFailure, _>` from `common`), so `data` will legitimately reference those alongside `logic` types, without importing the lower modules itself.
 
 ## Native dependencies
 
