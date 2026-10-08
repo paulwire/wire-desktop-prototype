@@ -50,6 +50,10 @@ These `Edit`/`Write` rules only stop Claude's own file-editing tools; they don't
 - Gradle/Kotlin project using the Compose Multiplatform Gradle plugin, desktop (JVM) target only for now.
 - `src/main/kotlin` — application source, split into `ui`, `presentation`, and `data` packages per AGENTS.md.
 
+## Architecture decisions
+
+Significant technical decisions and spike learnings get an ADR in `docs/adr/`, using the template at `docs/adr/0000-template.md`. See `docs/adr/0001-record-architecture-decisions.md` for when one is warranted.
+
 ## License
 
 GPL-3.0 (see `LICENSE`).
