@@ -17,6 +17,8 @@
       "Bash(./scripts/codex-review.sh*)",
       "Bash(gh pr checks *)",
       "Bash(gh pr create *)",
+      "Bash(gh issue *)",
+      "Bash(gh label *)",
       "Bash(codex --version)",
       "Bash(codex --help)",
       "Bash(codex exec --help)",
@@ -38,7 +40,10 @@
       "Bash(git push --force*)",
       "Bash(rm -rf *)",
       "Read(./.env*)",
-      "Bash(gh repo delete *)"
+      "Bash(gh repo delete *)",
+      "Bash(gh issue delete *)",
+      "Bash(gh issue transfer *)",
+      "Bash(gh label delete *)"
     ]
   }
 }
