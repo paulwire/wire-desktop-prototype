@@ -25,6 +25,27 @@ After opening a PR:
 
 Claude never posts or edits PR review comments itself — that's the script's job, using Codex's own output.
 
+## Issue workflow
+
+### Tackle the next issue
+
+1. Pick the lowest-numbered open issue labelled `ready`.
+2. Branch as `issue-<number>-<short-name>`.
+3. Stay in scope. If something out of scope turns out to be needed, stop and propose a new issue instead of expanding this one.
+4. Start the PR description with `Closes #<number>`, followed by how each acceptance criterion is met.
+5. Then follow the PR workflow above.
+
+Spikes are time-boxed and may be throwaway; their main output is what we learned. Write that up in `docs/architecture.md`, and record it as an ADR too — a spike's outcome is exactly the kind of decision [ADR 0001](docs/adr/0001-record-architecture-decisions.md) says warrants one, per the Architecture decisions convention below.
+
+### Refine the roadmap
+
+After a slice merges:
+
+1. Update `docs/roadmap.md` with what we learned.
+2. Detail the next one-line slice into full form.
+3. Create its issue, using the [slice issue template](.github/ISSUE_TEMPLATE/slice.md).
+4. Relabel newly unblocked issues as `ready`.
+
 ## Reference directories
 
 Sibling repos cloned alongside this one (e.g. `../kalium`, Wire's Kotlin Multiplatform SDK) may be used as read-only reference material, but must never be added to the shared `.claude/settings.json`: under `acceptEdits`, listing a directory in `additionalDirectories` there grants automatic write access to it for every developer. Instead, add both the grant and its protection together to your own gitignored `.claude/settings.local.json`:
