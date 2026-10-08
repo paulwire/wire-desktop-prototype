@@ -16,6 +16,7 @@
       "Bash(gh pr list*)",
       "Bash(./scripts/codex-review.sh*)",
       "Bash(gh pr checks *)",
+      "Bash(gh pr create *)",
       "Bash(codex --version)",
       "Bash(codex --help)",
       "Bash(codex exec --help)",
@@ -26,7 +27,6 @@
       "Bash(chmod +x scripts/*)"
     ],
     "ask": [
-      "Bash(gh pr create *)",
       "Bash(gh pr merge *)",
       "Bash(gh api *)",
       "Bash(curl *api.github.com*)",
