@@ -34,3 +34,6 @@ local.properties
 
 # Local Codex review output
 review.md
+
+# Local-only scratch docs (planning notes, not meant to be shared/committed)
+*.local.md
