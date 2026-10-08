@@ -41,9 +41,9 @@
       "Bash(rm -rf *)",
       "Read(./.env*)",
       "Bash(gh repo delete *)",
-      "Bash(gh issue delete *)",
-      "Bash(gh issue transfer *)",
-      "Bash(gh label delete *)"
+      "Bash(gh issue*delete*)",
+      "Bash(gh issue*transfer*)",
+      "Bash(gh label*delete*)"
     ]
   }
 }
