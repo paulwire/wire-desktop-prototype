@@ -51,6 +51,8 @@ Applies to Kotlin source files (`src/`); it does not apply to vendored or genera
 
 ### Testing
 
+Applies to application code (`src/`); root build-script and tooling fixes (e.g. `build.gradle.kts` task configuration) are exempt from the regression-test requirement below — verify those manually and explain the verification in the PR description instead.
+
 - Every `presentation` and `data` class has unit tests.
 - Coverage of `presentation` and `data` stays at or above 80%.
 - Bug fixes come with a test that fails without the fix.
