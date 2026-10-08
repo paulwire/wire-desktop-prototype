@@ -82,9 +82,9 @@ complexity:
         threshold: 300
     LongMethod:
         active: true
-        # wire-desktop-prototype keeps a tighter function-size limit than kalium (AGENTS.md: functions under 40 lines).
+        # wire-desktop-prototype keeps a tighter function-size limit than kalium (AGENTS.md: functions under 40 lines,
+        # with no exception for @Composable).
         threshold: 40
-        ignoreAnnotated: [ 'Composable' ]
     LongParameterList:
         active: true
         functionThreshold: 6

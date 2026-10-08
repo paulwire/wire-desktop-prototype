@@ -43,6 +43,8 @@ Allowed dependency direction: `ui` → `presentation` → `data`. Never the othe
 
 ### Size limits
 
+Applies to Kotlin source files (`src/`); it does not apply to vendored or generated configuration, such as `config/detekt/detekt.yml`, which is adopted wholesale from a tool or another project rather than authored here.
+
 - Files under 300 lines.
 - Functions under 40 lines.
 - One main class per file.
