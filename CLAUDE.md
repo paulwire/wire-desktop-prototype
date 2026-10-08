@@ -35,7 +35,7 @@ Claude never posts or edits PR review comments itself — that's the script's jo
 4. Start the PR description with `Closes #<number>`, followed by how each acceptance criterion is met.
 5. Then follow the PR workflow above.
 
-Spikes are time-boxed and may be throwaway; their main output is what we learned, which goes into `docs/architecture.md`.
+Spikes are time-boxed and may be throwaway; their main output is what we learned. Write that up in `docs/architecture.md`, and record it as an ADR too — a spike's outcome is exactly the kind of decision [ADR 0001](docs/adr/0001-record-architecture-decisions.md) says warrants one, per the Architecture decisions convention below.
 
 ### Refine the roadmap
 
