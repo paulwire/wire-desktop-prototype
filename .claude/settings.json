@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Bash(./gradlew *)",
+      "Bash(make *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git checkout *)",
+      "Bash(git push origin *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr list*)",
+      "Bash(./scripts/codex-review.sh*)",
+      "Bash(gh pr comment *)",
+      "Bash(gh pr checks *)"
+    ],
+    "ask": [
+      "Bash(gh pr create *)",
+      "Bash(gh pr merge *)",
+      "Bash(gh api *)",
+      "Bash(curl *api.github.com*)",
+      "Edit(./.github/**)",
+      "Write(./.github/**)"
+    ],
+    "deny": [
+      "Bash(gh pr merge *--admin*)",
+      "Bash(git push --force*)",
+      "Bash(rm -rf *)",
+      "Read(./.env*)",
+      "Bash(gh repo delete *)"
+    ]
+  }
+}

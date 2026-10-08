@@ -1,0 +1,15 @@
+# Codex default rules
+# Note: Codex CLI's actual enforcement mechanism is approval_policy / sandbox_mode
+# in ~/.codex/config.toml. This file is a human-readable policy reference for
+# this machine's intended command-approval behavior.
+
+ask:
+  gh api *
+
+deny:
+  git push --force*
+
+forbidden:
+  gh pr create *
+  gh pr merge *
+  git push *

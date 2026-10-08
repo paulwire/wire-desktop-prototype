@@ -13,6 +13,16 @@ Follow AGENTS.md — it is the single source of truth for architecture, size lim
 - **Never commit secrets.** No API keys, tokens, credentials, or `local.properties`-style config. If something needs a secret, it belongs in an ignored local file or env var, never in source.
 - **Build before opening a PR.** Run the Gradle build locally and confirm it succeeds before pushing and opening a PR. A PR should never be opened against a known-broken build.
 
+## PR workflow
+
+After opening a PR:
+
+1. Run `./scripts/codex-review.sh` to get an independent Codex review against the Code Review Rules in AGENTS.md.
+2. Post the result as a PR comment titled "Codex review" using `gh pr comment`.
+3. Fix every valid P0 and P1 finding, then push.
+4. Re-run the review and repeat until no P0 or P1 findings remain.
+5. Report back which findings were fixed and which were disagreed with, and why.
+
 ## Project structure
 
 - Gradle/Kotlin project using the Compose Multiplatform Gradle plugin, desktop (JVM) target only for now.

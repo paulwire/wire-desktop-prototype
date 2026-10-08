@@ -29,5 +29,8 @@ local.properties
 .env
 
 # Local AI-agent tool configs (machine-specific, not shared)
-.claude/
-.codex/
+.claude/settings.local.json
+.codex/config.toml
+
+# Local Codex review output
+review.md
