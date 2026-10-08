@@ -17,6 +17,10 @@ This project explores building a native Wire desktop experience using Compose Mu
 
 Early prototype / work in progress.
 
+## How we work
+
+Code in this repository is written by Claude and reviewed by Codex. Every pull request is checked against the standards in [AGENTS.md](AGENTS.md) by an automated Codex review before merge, and any P0 or P1 findings are fixed prior to merging.
+
 ## License
 
 This project is licensed under the GNU General Public License v3.0 — see [LICENSE](LICENSE) for details.
