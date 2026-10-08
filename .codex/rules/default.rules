@@ -1,15 +1,29 @@
-# Codex default rules
-# Note: Codex CLI's actual enforcement mechanism is approval_policy / sandbox_mode
-# in ~/.codex/config.toml. This file is a human-readable policy reference for
-# this machine's intended command-approval behavior.
+# Codex execpolicy rules
+# Note: these govern commands the `codex` CLI agent may run directly during
+# `codex exec` (e.g. in scripts/codex-review.sh), not general shell/CI
+# permissions. Codex reviews PRs; it must not post, push, or merge them.
 
-ask:
-  gh api *
+prefix_rule(
+    pattern = ["gh", "api"],
+    decision = "prompt",
+)
 
-deny:
-  git push --force*
+prefix_rule(
+    pattern = ["git", "push", "--force"],
+    decision = "forbidden",
+)
 
-forbidden:
-  gh pr create *
-  gh pr merge *
-  git push *
+prefix_rule(
+    pattern = ["gh", "pr", "create"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["gh", "pr", "merge"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "push"],
+    decision = "forbidden",
+)
