@@ -27,3 +27,7 @@ kotlin-js-store/
 # Local environment / secrets
 local.properties
 .env
+
+# Local AI-agent tool configs (machine-specific, not shared)
+.claude/
+.codex/
