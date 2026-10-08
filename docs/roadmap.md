@@ -8,7 +8,7 @@ The target backend for development is staging (deeplink config: `https://staging
 
 New slices should use the [slice issue template](../.github/ISSUE_TEMPLATE/slice.md).
 
-**Status: blocked.** Issue #11's spike found no viable way to depend on kalium's `logic` module from this project's own build — see [docs/architecture.md](architecture.md#dependency-mechanism-blocked-issue-11-spike-finding) and [ADR 0002](adr/0002-kalium-dependency-mechanism.md). Slice 1 (and everything after it) is on hold until the follow-up dependency-mechanism issue is resolved.
+**Status: blocked.** Issue #11's spike found a viable dependency mechanism (Gradle composite build, project-scoped task invocation), but this project's Kotlin/Compose Multiplatform versions need upgrading to be binary-compatible with kalium's Kotlin 2.1.0 before anything can actually compile against `:logic` — see [docs/architecture.md](architecture.md#dependency-mechanism-viable-blocked-on-a-kotlincompose-upgrade-issue-11-spike-finding) and [ADR 0002](adr/0002-kalium-dependency-mechanism.md). Slice 1 (and everything after it) is on hold until that upgrade lands.
 
 ## 1. Spike: bootstrap Kalium + MLS client registration
 
@@ -20,7 +20,7 @@ New slices should use the [slice issue template](../.github/ISSUE_TEMPLATE/slice
 - A throwaway `data`-layer entry point (e.g. a small harness, not shipped UI) constructs `CoreLogic` with a `rootPath` under this app's local data directory.
 - It resolves `ServerConfig.Links` for staging via `fetchServerConfigFromDeepLink("https://staging-nginz-https.zinfra.io/deeplink.json")`.
 - It logs in with the test account's credentials, completes client/key-package registration, and reaches a usable `UserSessionScope` without crashing.
-- The open "does the libsodium-bindings JVM target need system libsodium" question is resolved one way or the other, and the answer is written down (promote to an ADR if the resulting approach is non-obvious). **Not reached** — still blocked behind the dependency-mechanism issue below, since answering it requires an actual working build against `:logic`.
+- The open "does the libsodium-bindings JVM target need system libsodium" question is resolved one way or the other, and the answer is written down (promote to an ADR if the resulting approach is non-obvious). **Not reached** — still blocked behind the Kotlin/Compose upgrade below, since answering it requires an actual working build against `:logic`.
 
 **Kalium APIs involved**: `CoreLogic`, `coreLogic.globalScope { fetchServerConfigFromDeepLink(...) }`, `coreLogic.versionedAuthenticationScope(serverLinks).invoke(null)` (not a direct `getAuthenticationScope(...)` call), `AuthenticationScope.login`, `coreLogic.globalScope { addAuthenticatedAccount(...) }`, `coreLogic.sessionScope(userId) { client.getOrRegister(RegisterClientParam(...)) }` (confirmed this single call handles client/key-package registration — no separate MLS-specific API was needed), `CoreLogic.getSessionScope(userId)`.
 
@@ -28,7 +28,7 @@ New slices should use the [slice issue template](../.github/ISSUE_TEMPLATE/slice
 
 **Out of scope**: Any UI. MLS edge cases beyond "login succeeds on this one team" (external join, key package exhaustion/rotation). Calling.
 
-**Dependencies**: Staging backend reachable; test account credentials; the deeplink config URL above. **Blocked** on finding a viable way to depend on kalium's `logic` module from this project's build — see [docs/architecture.md](architecture.md#dependency-mechanism-blocked-issue-11-spike-finding) and the tracking issue. Login/MLS-registration acceptance criteria above were not reached; only the API shapes were confirmed by reading kalium's `cli` module source.
+**Dependencies**: Staging backend reachable; test account credentials; the deeplink config URL above. **Blocked** on upgrading this project's Kotlin/Compose Multiplatform versions to be compatible with kalium's Kotlin 2.1.0 — see [docs/architecture.md](architecture.md#dependency-mechanism-viable-blocked-on-a-kotlincompose-upgrade-issue-11-spike-finding) and the tracking issue. Login/MLS-registration acceptance criteria above were not reached; only the API shapes were confirmed by reading kalium's `cli` module source.
 
 ## 2. Login screen
 

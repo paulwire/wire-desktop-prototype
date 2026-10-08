@@ -30,9 +30,9 @@ On app start, `data` checks `GlobalKaliumScope` for a persisted account before s
 | Self user | `logic/src/commonMain/kotlin/com/wire/kalium/logic/feature/user/` (`GetSelfUserUseCase.kt`, `ObserveSelfUserUseCase.kt`) |
 | Proteus/MLS crypto (prebuilt, no native build) | `cryptography/build.gradle.kts` (`com.wire:core-crypto-jvm`, pinned in `gradle/libs.versions.toml`) |
 
-## Dependency mechanism: blocked (issue #11 spike finding)
+## Dependency mechanism: viable, blocked on a Kotlin/Compose upgrade (issue #11 spike finding)
 
-Kalium is not published as a consumable Maven artifact anywhere (no `maven-publish`/`publishToMavenLocal` setup exists in `../kalium` as of `develop@1668716594a300fc3ed6b8b202bdf2b0b4689e1c`). The only mechanism that resolves the actual dependency is a Gradle composite build:
+Kalium is not published as a consumable Maven artifact anywhere (no `maven-publish`/`publishToMavenLocal` setup exists in `../kalium` as of `develop@1668716594a300fc3ed6b8b202bdf2b0b4689e1c`). The mechanism that resolves and builds against it is a Gradle composite build:
 
 ```kotlin
 // settings.gradle.kts
@@ -45,11 +45,13 @@ includeBuild("../kalium") {
 
 This gets dependency *resolution* working (`com.wire.kalium:logic` substitutes to `:logic`'s project build, `com.wire:core-crypto-jvm:9.1.1` resolves as a normal artifact) but requires two further fixes just to configure:
 
-- Our Gradle wrapper bumped from 8.9 to at least 8.11.1 — kalium's `android/` module's AGP enforces that floor, and composite builds always configure every subproject of the included build, not just the one you depend on.
-- JVM heap raised well above Gradle's defaults (512 MiB heap / 384 MiB metaspace was not enough — the daemon crashed from GC thrashing configuring kalium's entire multi-module graph; 4 GiB heap / 1 GiB metaspace got past configuration).
+- Our Gradle wrapper bumped from 8.9 to at least 8.11.1 — kalium's `android/` module's AGP enforces that floor.
+- JVM heap raised well above Gradle's defaults (512 MiB heap / 384 MiB metaspace was not enough — the daemon crashed from GC thrashing while Gradle configured kalium's entire multi-module graph, which happens regardless of task scoping; 4 GiB heap / 1 GiB metaspace got past configuration).
 
-**Compilation still fails.** Gradle's composite-build mechanism pulls the *entire* kalium project graph into our task graph, not just `:logic` and its real dependencies (`:common`, `:data`, `:network-util`, `:logger`, `:calling`). Our `compileKotlin` also triggers `:kalium:monkeys:compileKotlin` — an unrelated internal load-testing tool we don't depend on — which is broken on this snapshot (unresolved `ConversationOptions` references). No supported way to exclude unrelated included-build subprojects from the task graph was found (Gradle rejected `--exclude-task :kalium:monkeys:compileKotlin`; `--configure-on-demand`/`--configuration-on-demand` has no effect on included builds).
+**Invoke Gradle tasks scoped to this project (`:compileKotlin`, `:build`, etc.), never bare task names.** A bare task name like `compileKotlin` (no leading `:`) makes Gradle run that task on every project across the whole build *and* every included build that has a matching task name — this is what initially made it look like compiling our code required compiling kalium's unrelated `:monkeys` module (an internal load-testing tool, broken on the snapshot tested against). Re-running with `./gradlew :compileKotlin` (root-project-scoped) never touches `:monkeys` at all — configuration-phase evaluation of all included-build subprojects is unavoidable, but task *execution* correctly stays scoped to what's actually needed.
 
-**Conclusion**: a plain composite build is not a viable long-term dependency mechanism — it makes this project's buildability hostage to the health of kalium's entire monorepo, including modules we have no stake in and (per [CLAUDE.md](../CLAUDE.md)'s reference-directory rule) shouldn't be patching ourselves. See [ADR 0002](adr/0002-kalium-dependency-mechanism.md) for the decision record, and the tracking issue for finding a real mechanism before slice 1 (and everything after it) can proceed.
+**The real remaining blocker is a Kotlin version mismatch.** Kalium is built with Kotlin 2.1.0; this project is pinned to Kotlin 1.9.24 (via the Compose Multiplatform Gradle plugin version, 1.6.11, which predates Kotlin 2.x's separate Compose-compiler-plugin model). Kalium's compiled classes carry 2.1.0 binary metadata, which a 1.9.x Kotlin compiler can't read — `compileKotlin` fails with "Module was compiled with an incompatible version of Kotlin" across the board, including in our own pre-existing source files, once kalium's Kotlin 2.1.0 stdlib lands on the classpath.
+
+**Conclusion**: the composite-build dependency mechanism is viable, provided (a) all Gradle invocations are project-scoped and (b) this project's Kotlin and Compose Multiplatform versions are upgraded to be binary-compatible with kalium's Kotlin 2.1.0. That upgrade is a separate, non-trivial, whole-codebase change (new Compose-compiler-plugin model, possible detekt/Konsist compatibility implications) — tracked as its own issue rather than folded into the spike. See [ADR 0002](adr/0002-kalium-dependency-mechanism.md) for the full decision record.
 
 See [docs/roadmap.md](roadmap.md) for the integration slices and their open risks.
