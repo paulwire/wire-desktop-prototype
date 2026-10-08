@@ -1,21 +1,33 @@
-# Architecture notes from Kalium
+# Architecture
 
-Notes taken from `../kalium/README.md` ahead of integrating Kalium's `logic` module, for context on how the SDK we depend on is structured and built. Kalium has no `CONTRIBUTING.md` or `ARCHITECTURE.md` — this is drawn from its root README.
+## Layers
 
-## Module layering
+Per [AGENTS.md](../AGENTS.md): `ui` → `presentation` → `data`, one-way. `ui` is Compose-only, `presentation` holds ViewModels, `data` is the only layer allowed to import Kalium. Nothing outside `data` sees a Kalium type.
 
-Kalium is split into many Gradle modules, with `logic` sitting at the top as the orchestration layer: it depends on `data`, `network`, `network-util`, `cryptography`, `persistence`, `calling`, `cells`, `backup`, `protobuf`, `util`, `common`, and `logger`.
+## How Kalium is wired in
 
-This matches the boundary already drawn in [AGENTS.md](../AGENTS.md): this repo's `data` layer should only ever import Kalium's `logic` module, never reach past it into `network`, `persistence`, `cryptography`, etc. directly. `logic` is the one supported entry point — note that its public API does transitively expose some lower-module types (e.g. use cases returning `Either<CoreFailure, _>` from `common`), so `data` will legitimately reference those alongside `logic` types, without importing the lower modules itself.
+- `data` owns one process-scoped `CoreLogic` instance (Kalium's top-level entry point), constructed with a `rootPath` under this app's local data directory.
+- Backend endpoints are resolved through Kalium's own custom-backend deep-link mechanism (`fetchServerConfigFromDeepLink(url)`) rather than hand-derived — for staging, the `config=` URL is `https://staging-nginz-https.zinfra.io/deeplink.json`.
+- `data` wraps Kalium's scopes and use cases behind its own repository interfaces (session/auth, conversations, messages, self-user). `presentation` and `ui` only ever see those interfaces.
+- Crypto (Proteus and MLS) runs through the prebuilt `com.wire:core-crypto-jvm` Maven artifact — no native library build step required for this JVM-only app.
 
-## Native dependencies
+## Where the session lives
 
-Kalium's crypto (`cryptography`, used transitively by `logic`) depends on native libraries — `libsodium`, `cryptobox-c`, `cryptobox4j`. Any Gradle task that touches that code path needs `-Djava.library.path=<path-to-native-libs>` on the JVM. This doesn't affect this repo's UI/presentation code, but it will matter once `data` actually exercises Kalium's crypto-backed APIs (directly, or in tests that don't fake the `logic` boundary).
+`CoreLogic` → `GlobalKaliumScope` (pre-login: persisted account list) → `AuthenticationScope` (one per login attempt) → `UserSessionScope` (one per logged-in user). `data` holds the active `UserSessionScope` for the single logged-in user (multi-account is out of scope for now).
 
-## Detekt
+On app start, `data` checks `GlobalKaliumScope` for a persisted account before showing any screen: if one exists, it restores that `UserSessionScope` from the same `rootPath` with no fresh login; otherwise the user sees the login screen.
 
-Kalium enforces style with Detekt both as live IDE feedback (detekt IntelliJ plugin pointed at `detekt/detekt.yml`) and in CI (`./gradlew clean detekt`). We follow the same pattern — our `config/detekt/detekt.yml` is based on Kalium's, with our own size-limit overrides (see [ADR 0001](adr/0001-record-architecture-decisions.md) for the record-keeping convention; the detekt base-config choice itself was small enough not to need its own ADR).
+## Key Kalium entry points (paths in `../kalium`)
 
-## Not adopted
+| Entry point | Path |
+| --- | --- |
+| `CoreLogic` | `logic/src/jvmMain/kotlin/com/wire/kalium/logic/CoreLogic.kt` |
+| `GlobalKaliumScope` (via `CoreLogic.getGlobalScope()`) | `logic/src/commonMain/kotlin/com/wire/kalium/logic/GlobalKaliumScope.kt` |
+| `AuthenticationScope` (via `CoreLogic.getAuthenticationScope(...)`); login example | `cli/src/commonMain/kotlin/.../commands/LoginCommand.kt` |
+| `UserSessionScope` (via `CoreLogic.getSessionScope(userId)`) | `logic/src/commonMain/kotlin/com/wire/kalium/logic/feature/UserSessionScope.kt` |
+| Conversations (`conversations: ConversationScope`) | `logic/src/commonMain/kotlin/com/wire/kalium/logic/feature/conversation/` (`GetConversationsUseCase.kt`, `ObserveConversationListDetailsUseCaseImpl.kt`) |
+| Messages (`messages: MessageScope`) | `logic/src/commonMain/kotlin/com/wire/kalium/logic/feature/message/` (`GetRecentMessagesUseCase.kt`, `SendTextMessageUseCase.kt`) |
+| Self user | `logic/src/commonMain/kotlin/com/wire/kalium/logic/feature/user/` (`GetSelfUserUseCase.kt`, `ObserveSelfUserUseCase.kt`) |
+| Proteus/MLS crypto (prebuilt, no native build) | `cryptography/build.gradle.kts` (`com.wire:core-crypto-jvm`, pinned in `gradle/libs.versions.toml`) |
 
-Kalium's config references a custom `WireRuleSet` (e.g. `EnforceSerializableFields`, `DocumentedPublicUseCases`) backed by a `detekt-rules` plugin jar built from their own module. We don't have that module here, so those rules are omitted from our detekt config rather than carried over as dead configuration.
+See [docs/roadmap.md](roadmap.md) for the integration slices and their open risks (MLS client/key-package registration in particular is still being de-risked in the spike).

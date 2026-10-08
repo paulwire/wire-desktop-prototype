@@ -645,4 +645,4 @@ libraries:
 
 # kalium's WireRuleSet (EnforceSerializableFields, DocumentedPublicUseCases) is deliberately
 # not carried over here: it's backed by kalium's own detekt-rules plugin jar, which this repo
-# doesn't depend on. See docs/architecture.md.
+# doesn't depend on.
