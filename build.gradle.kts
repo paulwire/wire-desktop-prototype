@@ -26,6 +26,14 @@ compose.desktop {
     }
 }
 
+tasks.withType<JavaExec>().configureEach {
+    // Snap-packaged editors (e.g. VS Code) set GTK_PATH to their own bundled GTK module dir.
+    // GTK then loads a snap-bundled libpthread.so.0 that's incompatible with the system glibc,
+    // crashing the JVM with a "GLIBC_PRIVATE" symbol lookup error. Strip it so `run` works from
+    // any terminal, regardless of what launched it.
+    environment.remove("GTK_PATH")
+}
+
 val test by tasks.existing(Test::class) {
     useJUnitPlatform()
     exclude("**/architecture/**")
