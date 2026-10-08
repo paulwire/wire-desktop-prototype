@@ -38,9 +38,7 @@
       "Bash(git push --force*)",
       "Bash(rm -rf *)",
       "Read(./.env*)",
-      "Bash(gh repo delete *)",
-      "Edit(../kalium/**)",
-      "Write(../kalium/**)"
+      "Bash(gh repo delete *)"
     ],
     "additionalDirectories": [
       "../kalium"
