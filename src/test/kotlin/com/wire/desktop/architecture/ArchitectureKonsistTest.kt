@@ -21,7 +21,9 @@ class ArchitectureKonsistTest {
             val data = Layer("Data", "com.wire.desktop.data..")
 
             ui.dependsOn(presentation)
+            ui.doesNotDependOn(data)
             presentation.dependsOn(data)
+            presentation.doesNotDependOn(ui)
             data.dependsOnNothing()
         }
     }
