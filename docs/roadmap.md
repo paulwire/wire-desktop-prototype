@@ -8,7 +8,7 @@ The target backend for development is staging (deeplink config: `https://staging
 
 New slices should use the [slice issue template](../.github/ISSUE_TEMPLATE/slice.md).
 
-**Status: blocked.** Issue #11's spike found a viable dependency mechanism (Gradle composite build, project-scoped task invocation), but this project's Kotlin/Compose Multiplatform versions need upgrading to be binary-compatible with kalium's Kotlin 2.1.0 before anything can actually compile against `:logic` — see [docs/architecture.md](architecture.md#dependency-mechanism-viable-blocked-on-a-kotlincompose-upgrade-issue-11-spike-finding) and [ADR 0002](adr/0002-kalium-dependency-mechanism.md). Slice 1 (and everything after it) is on hold until that upgrade lands.
+**Status: blocked.** Issue #11's spike found a workable dependency mechanism (Gradle composite build against kalium's `logic` module), but this project's Kotlin/Compose Multiplatform versions need upgrading to be binary-compatible with kalium's Kotlin 2.1.0 before anything can actually compile against `:logic` — see [docs/architecture.md](architecture.md#dependency-mechanism-viable-blocked-on-a-kotlincompose-upgrade-issue-11-spike-finding) and [ADR 0002](adr/0002-kalium-dependency-mechanism.md). Slice 1 (and everything after it) is on hold until that upgrade lands.
 
 ## 1. Spike: bootstrap Kalium + MLS client registration
 
