@@ -71,10 +71,10 @@ New slices should use the [slice issue template](../.github/ISSUE_TEMPLATE/slice
 
 ## Later slices (one-line each, to be expanded with the full template when picked up)
 
-4. **Conversations list screen** — start sync (`syncExecutor.request { keepSyncAlwaysOn() }`, from slice 1/2) and display conversations via `GetConversationsUseCase`, which already returns a `Flow<List<Conversation>>` (DB-backed; stays empty without an active sync, not a live network fetch).
-5. **Open a conversation** — show its recent messages via `GetRecentMessagesUseCase` (also already a `Flow<List<Message>>`), same sync-must-be-running caveat as slice 4.
+4. **Conversations list screen** — start sync (`syncExecutor.request { keepSyncAlwaysOn() }`, from slice 1/2) and collect `GetConversationsUseCase`'s `Flow<List<Conversation>>` *continuously from the start*, not as a one-shot snapshot: `keepSyncAlwaysOn()` doesn't await initial sync completion, and this use case observes local data immediately, so a one-shot read can land on an empty DB before the first sync finishes.
+5. **Open a conversation** — show its recent messages via `GetRecentMessagesUseCase` (already a `Flow<List<Message>>` that internally awaits slow-sync completion before emitting, unlike slice 4's use case) — also collect continuously, not as a one-shot read.
 6. **Send a text message** — `SendTextMessageUseCase`, appended to the open conversation's view.
-7. **Live updates** — keep collecting the same `GetConversationsUseCase`/`GetRecentMessagesUseCase` flows from slices 4/5 continuously instead of one-shot collection, so new messages/conversations appear without manual refresh (no API switch needed — they're already observable).
+7. **Live updates** — by slice 4/5 already collecting continuously, this is less a new slice than confirming the UI re-renders correctly as those flows emit over time (no API switch needed — they're already observable).
 8. **Self user display** — show the logged-in user's name/handle (`GetSelfUserUseCase`/observe variant).
 9. **Logout** — invoke Kalium's `LogoutUseCase` (invalidates the session server-side and clears local client/session data, unlike `deleteSessionScope` alone, which only tears down the in-memory scope) and return to login.
 10. *(stretch)* **Basic connectivity/error state** surfaced in the UI — still desktop/JVM-only, no protocol changes.
