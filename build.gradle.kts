@@ -9,10 +9,15 @@ plugins {
 repositories {
     google()
     mavenCentral()
+    // Mirrors kalium's own allprojects repo (../kalium/build.gradle.kts) for its patched mockative
+    // dependency. kalium's repo declaration doesn't carry across the composite-build boundary for
+    // our own :runtimeClasspath resolution (see ADR 0003), so it needs to be listed here too.
+    maven(url = "https://raw.githubusercontent.com/saleniuk/mockative/fix/duplicates-while-merging-dex-archives-mvn/release")
 }
 
 dependencies {
     implementation(compose.desktop.currentOs)
+    implementation("com.wire.kalium:logic:0.0.1") // version is irrelevant: substituted by settings.gradle.kts
 
     testImplementation(kotlin("test-junit5"))
     testImplementation("com.lemonappdev:konsist:0.17.3")
