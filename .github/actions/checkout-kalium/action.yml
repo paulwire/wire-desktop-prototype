@@ -1,0 +1,26 @@
+name: Checkout kalium and set up JDK
+description: >
+  Checks out kalium as a workspace-sibling subdirectory and sets up the JDK, for the
+  composite-build dependency on kalium's :logic module (see ADR 0002/0004). Assumes this
+  repository has already been checked out into a `wire-desktop-prototype` subdirectory.
+
+runs:
+  using: composite
+  steps:
+    # Pinned to the exact commit the composite-build mechanism was verified against (ADR 0002/0003)
+    # rather than a branch, so CI doesn't break whenever kalium's develop branch changes. Bump
+    # deliberately — see ADR 0004.
+    - name: Checkout kalium
+      uses: actions/checkout@v7
+      with:
+        repository: wireapp/kalium
+        ref: 1668716594a300fc3ed6b8b202bdf2b0b4689e1c
+        path: kalium
+
+    - name: Set up JDK
+      uses: actions/setup-java@v6
+      with:
+        distribution: temurin
+        java-version: '21'
+        cache: gradle
+        cache-dependency-path: wire-desktop-prototype/**/*.gradle*

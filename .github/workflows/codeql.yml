@@ -1,0 +1,72 @@
+name: CodeQL
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze-actions:
+    name: Analyze (actions)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: actions
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:actions"
+
+  analyze-java-kotlin:
+    name: Analyze (java-kotlin)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write
+    defaults:
+      run:
+        working-directory: wire-desktop-prototype
+    steps:
+      # Same sibling-checkout layout as ci.yml (see ADR 0004) — CodeQL's own default-setup autobuild
+      # had no kalium sibling and failed outright once the composite-build dependency landed (#21),
+      # which is why this is an advanced-setup workflow with a manual build step instead.
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          path: wire-desktop-prototype
+
+      - name: Checkout kalium and set up JDK
+        uses: ./wire-desktop-prototype/.github/actions/checkout-kalium
+
+      # source-root/checkout_path: the repo lives in a `wire-desktop-prototype` subdirectory, not at
+      # $GITHUB_WORKSPACE (CodeQL's default) — without these, findings report paths that don't match
+      # files in the repository and PR annotations break.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: java-kotlin
+          build-mode: manual
+          source-root: wire-desktop-prototype
+
+      - name: Build
+        run: ./gradlew :assemble --no-daemon
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:java-kotlin"
+          checkout_path: ${{ github.workspace }}/wire-desktop-prototype
