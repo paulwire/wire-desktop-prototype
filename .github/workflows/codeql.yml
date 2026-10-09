@@ -49,26 +49,18 @@ jobs:
         with:
           path: wire-desktop-prototype
 
-      - name: Checkout kalium
-        uses: actions/checkout@v7
-        with:
-          repository: wireapp/kalium
-          ref: 1668716594a300fc3ed6b8b202bdf2b0b4689e1c
-          path: kalium
+      - name: Checkout kalium and set up JDK
+        uses: ./wire-desktop-prototype/.github/actions/checkout-kalium
 
-      - name: Set up JDK
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: '21'
-          cache: gradle
-          cache-dependency-path: wire-desktop-prototype/**/*.gradle*
-
+      # source-root/checkout_path: the repo lives in a `wire-desktop-prototype` subdirectory, not at
+      # $GITHUB_WORKSPACE (CodeQL's default) — without these, findings report paths that don't match
+      # files in the repository and PR annotations break.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: java-kotlin
           build-mode: manual
+          source-root: wire-desktop-prototype
 
       - name: Build
         run: ./gradlew :assemble --no-daemon
@@ -77,3 +69,4 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:java-kotlin"
+          checkout_path: ${{ github.workspace }}/wire-desktop-prototype
