@@ -8,9 +8,7 @@ The target backend for development is staging (deeplink config: `https://staging
 
 New slices should use the [slice issue template](../.github/ISSUE_TEMPLATE/slice.md).
 
-**Status: slice 1 complete; slice 2 blocked.** Issue #18 upgraded this project's Kotlin/Compose toolchain to be binary-compatible with kalium's Kotlin 2.1.0, and issue #11's spike then confirmed the composite-build dependency mechanism works end to end — login, client/MLS registration, and a usable `UserSessionScope`, all proven against staging. See [docs/architecture.md](architecture.md#dependency-mechanism-proven-end-to-end-locally-not-yet-wired-into-ci-issues-1118-spike-findings), [ADR 0002](adr/0002-kalium-dependency-mechanism.md), and [ADR 0003](adr/0003-kalium-bootstrap-spike-outcome.md).
-
-Slice 2 (login screen) is blocked on a new finding from that spike: CI has no access to kalium (`.github/workflows/ci.yml` only checks out this repo), so the composite-build wiring can't be committed yet without breaking every PR's build. That needs its own issue before slice 2 can proceed.
+**Status: slice 1 complete; slice 2 ready.** Issue #18 upgraded this project's Kotlin/Compose toolchain to be binary-compatible with kalium's Kotlin 2.1.0; issue #11's spike then confirmed the composite-build dependency mechanism works end to end — login, client/MLS registration, and a usable `UserSessionScope`, all proven against staging; issue #21 gave CI access to kalium and committed that wiring for real. See [docs/architecture.md](architecture.md#dependency-mechanism-committed-and-live-in-ci-issues-111821-findings), [ADR 0002](adr/0002-kalium-dependency-mechanism.md), [ADR 0003](adr/0003-kalium-bootstrap-spike-outcome.md), and [ADR 0004](adr/0004-kalium-ci-availability.md).
 
 ## 1. Spike: bootstrap Kalium + MLS client registration
 

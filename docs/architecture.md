@@ -31,7 +31,7 @@ On app start, `data` checks `GlobalKaliumScope` for a persisted account before s
 | Self user | `logic/src/commonMain/kotlin/com/wire/kalium/logic/feature/user/` (`GetSelfUserUseCase.kt`, `ObserveSelfUserUseCase.kt`) |
 | Proteus/MLS crypto (prebuilt, no native build) | `cryptography/build.gradle.kts` (`com.wire:core-crypto-jvm`, pinned in `gradle/libs.versions.toml`) |
 
-## Dependency mechanism: proven end to end locally; not yet wired into CI (issues #11/#18 spike findings)
+## Dependency mechanism: committed, and live in CI (issues #11/#18/#21 findings)
 
 Kalium is not published as a consumable Maven artifact anywhere (no `maven-publish`/`publishToMavenLocal` setup exists in `../kalium` as of `develop@1668716594a300fc3ed6b8b202bdf2b0b4689e1c`). The mechanism that resolves and builds against it is a Gradle composite build:
 
@@ -44,12 +44,14 @@ includeBuild("../kalium") {
 }
 ```
 
-This gets dependency *resolution* working (`com.wire.kalium:logic` substitutes to `:logic`'s project build, `com.wire:core-crypto-jvm:9.1.1` resolves as a normal artifact) but requires further local setup just to build against:
+This gets dependency *resolution* working (`com.wire.kalium:logic` substitutes to `:logic`'s project build, `com.wire:core-crypto-jvm:9.1.1` resolves as a normal artifact) but requires further setup just to build against, all now committed (issue #21):
 
 - Our Gradle wrapper bumped from 8.9 to at least 8.11.1 — kalium's `android/` module's AGP enforces that floor.
 - JVM heap raised well above Gradle's defaults (512 MiB heap / 384 MiB metaspace was not enough — the daemon crashed from GC thrashing while Gradle configured kalium's entire multi-module graph, which happens regardless of task scoping; 4 GiB heap / 1 GiB metaspace got past configuration).
 - Our Kotlin/Compose toolchain upgraded to match kalium's Kotlin 2.1.0 (issue #18 — see below).
 - A maven repo mirrored into our own `repositories {}` block for kalium's patched `mockative` dependency — see [ADR 0003](adr/0003-kalium-bootstrap-spike-outcome.md) for why kalium's own repo declaration for it doesn't carry across the included-build boundary.
+- `.github/workflows/ci.yml` checks out `wireapp/kalium` as a sibling (`path: ../kalium`), pinned to a fixed commit SHA rather than a branch — see [ADR 0004](adr/0004-kalium-ci-availability.md) for why, and bump that pin deliberately rather than letting it drift.
+- CI's Gradle invocations are project-scoped (`:test`, not `test`) as a precaution against the `:monkeys`-inclusion risk below.
 
 **Whether kalium's unrelated `:monkeys` module gets pulled into the build is not reliably explained by bare vs. project-scoped task invocation.** One run of bare `./gradlew compileKotlin` triggered a real compile of `:kalium:monkeys` (broken on the snapshot tested against, causing failure); a later run of scoped `./gradlew :compileKotlin` didn't touch it; a subsequent bare `./gradlew compileKotlin --dry-run` *also* didn't touch it, despite being "bare" like the first run. That inconsistency across nominally-identical invocations means the real cause is still unknown — plausibly Gradle task/build-cache state carried over between runs rather than anything about how the task was addressed. **Don't rely on task-scoping alone to avoid this**; treat kalium's monorepo-wide configuration cost and this unpredictability as an open risk of the composite-build approach.
 
@@ -57,8 +59,6 @@ This gets dependency *resolution* working (`com.wire.kalium:logic` substitutes t
 
 **With that clear, issue #11's spike confirmed the mechanism works end to end, not just for compilation**: a throwaway harness (not committed — see [ADR 0003](adr/0003-kalium-bootstrap-spike-outcome.md)) logged into staging with a real test account, registered a device client, completed MLS key-package upload, and reached a usable `UserSessionScope`, all built against kalium's `:logic` via this composite setup. The exact API call sequence is recorded in ADR 0003 and in the entry-points table below.
 
-**New blocker: CI has no access to kalium.** `.github/workflows/ci.yml` only checks out this repository — there's no sibling `../kalium` checkout, so permanently committing the composite-build wiring above would break CI on every PR. This needs solving before issue #12 (the login screen) can depend on kalium in committed code; it's tracked as a separate issue rather than folded into #11's spike.
-
-**Conclusion**: the composite-build dependency mechanism is proven viable for local development, through login and MLS registration — but isn't committed to this repo yet, pending a fix for the CI-availability gap above. See [ADR 0002](adr/0002-kalium-dependency-mechanism.md) for the original decision record and [ADR 0003](adr/0003-kalium-bootstrap-spike-outcome.md) for this spike's outcome.
+**Conclusion**: the composite-build dependency mechanism is proven viable end to end — through login and MLS registration locally (issue #11), and now committed with CI able to resolve it too (issue #21). Issue #12 (the login screen) can build real `data`-layer code against kalium's `:logic` from here. See [ADR 0002](adr/0002-kalium-dependency-mechanism.md) for the original decision record, [ADR 0003](adr/0003-kalium-bootstrap-spike-outcome.md) for the spike outcome, and [ADR 0004](adr/0004-kalium-ci-availability.md) for the CI wiring.
 
 See [docs/roadmap.md](roadmap.md) for the integration slices and their open risks.

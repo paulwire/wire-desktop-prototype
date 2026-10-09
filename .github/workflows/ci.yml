@@ -13,6 +13,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      # Composite-build dependency (see settings.gradle.kts, ADR 0002/0003): our build resolves
+      # kalium's :logic module from a sibling checkout, not a published artifact. Pinned to a known
+      # commit rather than a branch so CI doesn't break whenever kalium's develop branch changes.
+      - name: Checkout kalium
+        uses: actions/checkout@v7
+        with:
+          repository: wireapp/kalium
+          ref: 1668716594a300fc3ed6b8b202bdf2b0b4689e1c
+          path: ../kalium
+
       - name: Set up JDK
         uses: actions/setup-java@v6
         with:
@@ -20,17 +30,20 @@ jobs:
           java-version: '21'
           cache: gradle
 
+      # Project-scoped (":assemble", not "assemble"): a bare task name has, at least once, pulled
+      # kalium's unrelated and broken :monkeys module into the build (ADR 0002/0003 — the exact
+      # trigger wasn't pinned down, so scoping is a precaution, not a confirmed fix).
       - name: Build
-        run: ./gradlew assemble --no-daemon
+        run: ./gradlew :assemble --no-daemon
 
       - name: Tests
-        run: ./gradlew test --no-daemon
+        run: ./gradlew :test --no-daemon
 
       - name: Coverage check
-        run: ./gradlew koverVerify --no-daemon
+        run: ./gradlew :koverVerify --no-daemon
 
       - name: Detekt
-        run: ./gradlew detekt --no-daemon
+        run: ./gradlew :detekt --no-daemon
 
       - name: Konsist architecture checks
-        run: ./gradlew konsistTest --no-daemon
+        run: ./gradlew :konsistTest --no-daemon
