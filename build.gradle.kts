@@ -1,6 +1,7 @@
 plugins {
-    kotlin("jvm") version "1.9.24"
-    id("org.jetbrains.compose") version "1.6.11"
+    kotlin("jvm") version "2.1.0"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.1.0"
+    id("org.jetbrains.compose") version "1.8.2"
     id("org.jetbrains.kotlinx.kover") version "0.9.8"
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
 }
