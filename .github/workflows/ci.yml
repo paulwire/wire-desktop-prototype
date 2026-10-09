@@ -9,9 +9,17 @@ permissions:
 jobs:
   quality:
     runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: wire-desktop-prototype
     steps:
+      # Checked out into a subdirectory, as a sibling of kalium below — actions/checkout's `path`
+      # can't point outside $GITHUB_WORKSPACE with `../`, so both repos live under the workspace
+      # root instead, giving them the same sibling relationship `../kalium` expects locally.
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          path: wire-desktop-prototype
 
       # Composite-build dependency (see settings.gradle.kts, ADR 0002/0003): our build resolves
       # kalium's :logic module from a sibling checkout, not a published artifact. Pinned to a known
@@ -21,7 +29,7 @@ jobs:
         with:
           repository: wireapp/kalium
           ref: 1668716594a300fc3ed6b8b202bdf2b0b4689e1c
-          path: ../kalium
+          path: kalium
 
       - name: Set up JDK
         uses: actions/setup-java@v6
@@ -29,6 +37,7 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: gradle
+          cache-dependency-path: wire-desktop-prototype/**/*.gradle*
 
       # Project-scoped (":assemble", not "assemble"): a bare task name has, at least once, pulled
       # kalium's unrelated and broken :monkeys module into the build (ADR 0002/0003 — the exact
