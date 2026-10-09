@@ -25,12 +25,13 @@ On app start, `data` checks `GlobalKaliumScope` for a persisted account before s
 | `GlobalKaliumScope` (via `CoreLogic.getGlobalScope()`) | `logic/src/commonMain/kotlin/com/wire/kalium/logic/GlobalKaliumScope.kt` |
 | `AuthenticationScope` (via `coreLogic.versionedAuthenticationScope(serverLinks).invoke(null)`, not a direct `getAuthenticationScope(...)` call — confirmed against the `cli` module during the issue #11 spike) | `cli/src/commonMain/kotlin/com/wire/kalium/cli/commands/LoginCommand.kt` |
 | `UserSessionScope` (via `CoreLogic.getSessionScope(userId)`) | `logic/src/commonMain/kotlin/com/wire/kalium/logic/feature/UserSessionScope.kt` |
+| Client + MLS registration (`sessionScope.client.getOrRegister(RegisterClientParam(...))` — one call covers both; confirmed end to end against staging during the issue #11 spike) | `logic/src/commonMain/kotlin/com/wire/kalium/logic/feature/client/RegisterClientUseCase.kt` |
 | Conversations (`conversations: ConversationScope`) | `logic/src/commonMain/kotlin/com/wire/kalium/logic/feature/conversation/` (`GetConversationsUseCase.kt`, `ObserveConversationListDetailsUseCaseImpl.kt`) |
 | Messages (`messages: MessageScope`) | `logic/src/commonMain/kotlin/com/wire/kalium/logic/feature/message/` (`GetRecentMessagesUseCase.kt`, `SendTextMessageUseCase.kt`) |
 | Self user | `logic/src/commonMain/kotlin/com/wire/kalium/logic/feature/user/` (`GetSelfUserUseCase.kt`, `ObserveSelfUserUseCase.kt`) |
 | Proteus/MLS crypto (prebuilt, no native build) | `cryptography/build.gradle.kts` (`com.wire:core-crypto-jvm`, pinned in `gradle/libs.versions.toml`) |
 
-## Dependency mechanism: viable, blocked on a Kotlin/Compose upgrade (issue #11 spike finding)
+## Dependency mechanism: proven end to end locally; not yet wired into CI (issues #11/#18 spike findings)
 
 Kalium is not published as a consumable Maven artifact anywhere (no `maven-publish`/`publishToMavenLocal` setup exists in `../kalium` as of `develop@1668716594a300fc3ed6b8b202bdf2b0b4689e1c`). The mechanism that resolves and builds against it is a Gradle composite build:
 
@@ -43,15 +44,21 @@ includeBuild("../kalium") {
 }
 ```
 
-This gets dependency *resolution* working (`com.wire.kalium:logic` substitutes to `:logic`'s project build, `com.wire:core-crypto-jvm:9.1.1` resolves as a normal artifact) but requires two further fixes just to configure:
+This gets dependency *resolution* working (`com.wire.kalium:logic` substitutes to `:logic`'s project build, `com.wire:core-crypto-jvm:9.1.1` resolves as a normal artifact) but requires further local setup just to build against:
 
 - Our Gradle wrapper bumped from 8.9 to at least 8.11.1 — kalium's `android/` module's AGP enforces that floor.
 - JVM heap raised well above Gradle's defaults (512 MiB heap / 384 MiB metaspace was not enough — the daemon crashed from GC thrashing while Gradle configured kalium's entire multi-module graph, which happens regardless of task scoping; 4 GiB heap / 1 GiB metaspace got past configuration).
+- Our Kotlin/Compose toolchain upgraded to match kalium's Kotlin 2.1.0 (issue #18 — see below).
+- A maven repo mirrored into our own `repositories {}` block for kalium's patched `mockative` dependency — see [ADR 0003](adr/0003-kalium-bootstrap-spike-outcome.md) for why kalium's own repo declaration for it doesn't carry across the included-build boundary.
 
-**Whether kalium's unrelated `:monkeys` module gets pulled into the build is not reliably explained by bare vs. project-scoped task invocation.** One run of bare `./gradlew compileKotlin` triggered a real compile of `:kalium:monkeys` (broken on the snapshot tested against, causing failure); a later run of scoped `./gradlew :compileKotlin` didn't touch it; a subsequent bare `./gradlew compileKotlin --dry-run` *also* didn't touch it, despite being "bare" like the first run. That inconsistency across nominally-identical invocations means the real cause is still unknown — plausibly Gradle task/build-cache state carried over between runs rather than anything about how the task was addressed. **Don't rely on task-scoping alone to avoid this** until the actual mechanism is identified; treat kalium's monorepo-wide configuration cost and this unpredictability as an open risk of the composite-build approach, to revisit once the Kotlin/Compose upgrade below unblocks further investigation.
+**Whether kalium's unrelated `:monkeys` module gets pulled into the build is not reliably explained by bare vs. project-scoped task invocation.** One run of bare `./gradlew compileKotlin` triggered a real compile of `:kalium:monkeys` (broken on the snapshot tested against, causing failure); a later run of scoped `./gradlew :compileKotlin` didn't touch it; a subsequent bare `./gradlew compileKotlin --dry-run` *also* didn't touch it, despite being "bare" like the first run. That inconsistency across nominally-identical invocations means the real cause is still unknown — plausibly Gradle task/build-cache state carried over between runs rather than anything about how the task was addressed. **Don't rely on task-scoping alone to avoid this**; treat kalium's monorepo-wide configuration cost and this unpredictability as an open risk of the composite-build approach.
 
-**The real remaining blocker is a Kotlin version mismatch.** Kalium is built with Kotlin 2.1.0; this project is pinned to Kotlin 1.9.24 (via the Compose Multiplatform Gradle plugin version, 1.6.11, which predates Kotlin 2.x's separate Compose-compiler-plugin model). Kalium's compiled classes carry 2.1.0 binary metadata, which a 1.9.x Kotlin compiler can't read — `compileKotlin` fails with "Module was compiled with an incompatible version of Kotlin" across the board, including in our own pre-existing source files, once kalium's Kotlin 2.1.0 stdlib lands on the classpath.
+**The Kotlin version mismatch that previously blocked compilation is resolved.** Kalium is built with Kotlin 2.1.0; this project was pinned to Kotlin 1.9.24/Compose 1.6.11 (predating Kotlin 2.x's separate Compose-compiler-plugin model). Issue #18 upgraded both (Kotlin 2.1.0, Compose 1.8.2 + `org.jetbrains.kotlin.plugin.compose`), clearing the "Module was compiled with an incompatible version of Kotlin" failure.
 
-**Conclusion**: the composite-build dependency mechanism is viable, provided (a) all Gradle invocations are project-scoped and (b) this project's Kotlin and Compose Multiplatform versions are upgraded to be binary-compatible with kalium's Kotlin 2.1.0. That upgrade is a separate, non-trivial, whole-codebase change (new Compose-compiler-plugin model, possible detekt/Konsist compatibility implications) — tracked as its own issue rather than folded into the spike. See [ADR 0002](adr/0002-kalium-dependency-mechanism.md) for the full decision record.
+**With that clear, issue #11's spike confirmed the mechanism works end to end, not just for compilation**: a throwaway harness (not committed — see [ADR 0003](adr/0003-kalium-bootstrap-spike-outcome.md)) logged into staging with a real test account, registered a device client, completed MLS key-package upload, and reached a usable `UserSessionScope`, all built against kalium's `:logic` via this composite setup. The exact API call sequence is recorded in ADR 0003 and in the entry-points table below.
+
+**New blocker: CI has no access to kalium.** `.github/workflows/ci.yml` only checks out this repository — there's no sibling `../kalium` checkout, so permanently committing the composite-build wiring above would break CI on every PR. This needs solving before issue #12 (the login screen) can depend on kalium in committed code; it's tracked as a separate issue rather than folded into #11's spike.
+
+**Conclusion**: the composite-build dependency mechanism is proven viable for local development, through login and MLS registration — but isn't committed to this repo yet, pending a fix for the CI-availability gap above. See [ADR 0002](adr/0002-kalium-dependency-mechanism.md) for the original decision record and [ADR 0003](adr/0003-kalium-bootstrap-spike-outcome.md) for this spike's outcome.
 
 See [docs/roadmap.md](roadmap.md) for the integration slices and their open risks.

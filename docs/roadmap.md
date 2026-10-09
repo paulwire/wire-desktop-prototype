@@ -8,7 +8,9 @@ The target backend for development is staging (deeplink config: `https://staging
 
 New slices should use the [slice issue template](../.github/ISSUE_TEMPLATE/slice.md).
 
-**Status: blocked.** Issue #11's spike found a workable dependency mechanism (Gradle composite build against kalium's `logic` module), but this project's Kotlin/Compose Multiplatform versions need upgrading to be binary-compatible with kalium's Kotlin 2.1.0 before anything can actually compile against `:logic` — see [docs/architecture.md](architecture.md#dependency-mechanism-viable-blocked-on-a-kotlincompose-upgrade-issue-11-spike-finding) and [ADR 0002](adr/0002-kalium-dependency-mechanism.md). Slice 1 (and everything after it) is on hold until that upgrade lands.
+**Status: slice 1 complete; slice 2 blocked.** Issue #18 upgraded this project's Kotlin/Compose toolchain to be binary-compatible with kalium's Kotlin 2.1.0, and issue #11's spike then confirmed the composite-build dependency mechanism works end to end — login, client/MLS registration, and a usable `UserSessionScope`, all proven against staging. See [docs/architecture.md](architecture.md#dependency-mechanism-proven-end-to-end-locally-not-yet-wired-into-ci-issues-1118-spike-findings), [ADR 0002](adr/0002-kalium-dependency-mechanism.md), and [ADR 0003](adr/0003-kalium-bootstrap-spike-outcome.md).
+
+Slice 2 (login screen) is blocked on a new finding from that spike: CI has no access to kalium (`.github/workflows/ci.yml` only checks out this repo), so the composite-build wiring can't be committed yet without breaking every PR's build. That needs its own issue before slice 2 can proceed.
 
 ## 1. Spike: bootstrap Kalium + MLS client registration
 
@@ -16,11 +18,11 @@ New slices should use the [slice issue template](../.github/ISSUE_TEMPLATE/slice
 
 **User-visible outcome**: None in the running app yet — this is a technical spike. Success is observed via console/log output and a passing manual run, not through any UI.
 
-**Acceptance criteria**:
-- A throwaway `data`-layer entry point (e.g. a small harness, not shipped UI) constructs `CoreLogic` with a `rootPath` under this app's local data directory.
-- It resolves `ServerConfig.Links` for staging via `fetchServerConfigFromDeepLink("https://staging-nginz-https.zinfra.io/deeplink.json")`.
-- It logs in with the test account's credentials, completes client/key-package registration, and reaches a usable `UserSessionScope` without crashing.
-- The open "does the libsodium-bindings JVM target need system libsodium" question is resolved one way or the other, and the answer is written down (promote to an ADR if the resulting approach is non-obvious). **Not reached** — still blocked behind the Kotlin/Compose upgrade below, since answering it requires an actual working build against `:logic`.
+**Acceptance criteria** (all met — see [ADR 0003](adr/0003-kalium-bootstrap-spike-outcome.md) for the full write-up):
+- A throwaway `data`-layer entry point (e.g. a small harness, not shipped UI) constructs `CoreLogic` with a `rootPath` under this app's local data directory. **Done** — harness run locally, not committed (per "What to test" below).
+- It resolves `ServerConfig.Links` for staging via `fetchServerConfigFromDeepLink("https://staging-nginz-https.zinfra.io/deeplink.json")`. **Done.**
+- It logs in with the test account's credentials, completes client/key-package registration, and reaches a usable `UserSessionScope` without crashing. **Done** — verified against staging with a real test account.
+- The open "does the libsodium-bindings JVM target need system libsodium" question is resolved one way or the other, and the answer is written down. **Resolved: no.** The JVM artifact for `multiplatform-crypto-libsodium-bindings` bundles prebuilt native libsodium binaries (linux-x64/arm64, macOS, Windows x64) inside the jar itself, loaded via JNA at runtime.
 
 **Kalium APIs involved**: `CoreLogic`, `coreLogic.globalScope { fetchServerConfigFromDeepLink(...) }`, `coreLogic.versionedAuthenticationScope(serverLinks).invoke(null)` (not a direct `getAuthenticationScope(...)` call), `AuthenticationScope.login`, `coreLogic.globalScope { addAuthenticatedAccount(...) }`, `coreLogic.sessionScope(userId) { client.getOrRegister(RegisterClientParam(...)) }` (confirmed this single call handles client/key-package registration — no separate MLS-specific API was needed), `CoreLogic.getSessionScope(userId)`.
 
@@ -28,7 +30,7 @@ New slices should use the [slice issue template](../.github/ISSUE_TEMPLATE/slice
 
 **Out of scope**: Any UI. MLS edge cases beyond "login succeeds on this one team" (external join, key package exhaustion/rotation). Calling.
 
-**Dependencies**: Staging backend reachable; test account credentials; the deeplink config URL above. **Blocked** on upgrading this project's Kotlin/Compose Multiplatform versions to be compatible with kalium's Kotlin 2.1.0 — see [docs/architecture.md](architecture.md#dependency-mechanism-viable-blocked-on-a-kotlincompose-upgrade-issue-11-spike-finding) and the tracking issue. Login/MLS-registration acceptance criteria above were not reached; only the API shapes were confirmed by reading kalium's `cli` module source.
+**Dependencies**: Staging backend reachable; test account credentials; the deeplink config URL above. No other slice — this is first. **Complete** — see acceptance criteria above and [ADR 0003](adr/0003-kalium-bootstrap-spike-outcome.md).
 
 ## 2. Login screen
 
