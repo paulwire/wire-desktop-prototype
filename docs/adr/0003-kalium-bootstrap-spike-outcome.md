@@ -16,7 +16,7 @@ Confirmed, with a throwaway harness (not committed — see Consequences) run aga
 
 1. `CoreLogic(rootPath, KaliumConfigs(), userAgent)` constructs cleanly on the JVM.
 2. `coreLogic.globalScope { fetchServerConfigFromDeepLink(url) }` resolves `ServerConfig.Links` for staging.
-3. `coreLogic.versionedAuthenticationScope(serverLinks).invoke(null)` yields an `AuthenticationScope`; `authenticationScope.login(email, password, shouldPersistClient = true, ...)` succeeds (with `AuthenticationResult.Failure.InvalidCredentials.Missing2FA`/`Invalid2FA` handled by prompting for a verification code, matching kalium's own `cli` module's `LoginCommand.kt`).
+3. `coreLogic.versionedAuthenticationScope(serverLinks).invoke(null)` yields an `AuthenticationScope`; `authenticationScope.login(email, password, shouldPersistClient = true, ...)` succeeds. On `AuthenticationResult.Failure.InvalidCredentials.Missing2FA`, the harness first calls `authenticationScope.requestSecondFactorVerificationCode(email, VerifiableAction.LOGIN_OR_CLIENT_REGISTRATION)` to trigger the email, then prompts for the code and retries login with it — `Invalid2FA` just re-prompts without re-requesting. Matches kalium's own `cli` module's `LoginCommand.kt`.
 4. `coreLogic.globalScope { addAuthenticatedAccount(serverConfigId, ssoID, authData, null, true) }` persists the account.
 5. `coreLogic.sessionScope(userId) { client.getOrRegister(RegisterClientParam(password, emptyList())) }` registers a device client **and** completes MLS key-package upload in the same call — `RegisterClientUseCase` invokes `RegisterMLSClientUseCase` internally whenever MLS registration is allowed, so there is no separate MLS step to wire up.
 6. `coreLogic.getSessionScope(userId)` returns a usable `UserSessionScope`.
