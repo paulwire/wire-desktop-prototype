@@ -44,7 +44,7 @@ class LoginResultMapperTest {
 
         val result = failure.toLoginError()
 
-        assertEquals(LoginResult.Error("This app version is too new for the server. Please check for updates."), result)
+        assertEquals(LoginResult.Error("This server requires a newer version of the app. Please check for updates."), result)
     }
 
     @Test

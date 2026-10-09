@@ -31,8 +31,11 @@ internal fun GetServerConfigResult.Failure.toLoginError(): LoginResult.Error =
     LoginResult.Error("Could not reach the server. Please try again.")
 
 internal fun AutoVersionAuthScopeUseCase.Result.Failure.toLoginError(): LoginResult.Error = when (this) {
+    // TooNewVersion fires when the server's max supported API version exceeds the app's - i.e. the
+    // app is the outdated side here, not the server (confirmed against ApiVersionDTO's handling in
+    // kalium's ServerConfigRepositoryExtension).
     AutoVersionAuthScopeUseCase.Result.Failure.TooNewVersion ->
-        LoginResult.Error("This app version is too new for the server. Please check for updates.")
+        LoginResult.Error("This server requires a newer version of the app. Please check for updates.")
     AutoVersionAuthScopeUseCase.Result.Failure.UnknownServerVersion ->
         LoginResult.Error("Could not determine the server version.")
     is AutoVersionAuthScopeUseCase.Result.Failure.Generic ->
