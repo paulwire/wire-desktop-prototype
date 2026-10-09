@@ -26,44 +26,43 @@ import com.wire.kalium.logic.feature.client.RegisterClientResult
 import com.wire.kalium.logic.feature.server.GetServerConfigResult
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertIs
 
 class LoginResultMapperTest {
 
     @Test
-    fun givenServerConfigFailure_whenMappingToLoginError_thenReturnsError() {
+    fun givenServerConfigFailure_whenMappingToLoginError_thenReturnsServerUnreachableMessage() {
         val failure = GetServerConfigResult.Failure.Generic(CoreFailure.MissingClientRegistration)
 
         val result = failure.toLoginError()
 
-        assertIs<LoginResult.Error>(result)
+        assertEquals(LoginResult.Error("Could not reach the server. Please try again."), result)
     }
 
     @Test
-    fun givenTooNewVersionFailure_whenMappingToLoginError_thenReturnsError() {
+    fun givenTooNewVersionFailure_whenMappingToLoginError_thenReturnsTooNewVersionMessage() {
         val failure = AutoVersionAuthScopeUseCase.Result.Failure.TooNewVersion
 
         val result = failure.toLoginError()
 
-        assertIs<LoginResult.Error>(result)
+        assertEquals(LoginResult.Error("This app version is too new for the server. Please check for updates."), result)
     }
 
     @Test
-    fun givenUnknownServerVersionFailure_whenMappingToLoginError_thenReturnsError() {
+    fun givenUnknownServerVersionFailure_whenMappingToLoginError_thenReturnsUnknownVersionMessage() {
         val failure = AutoVersionAuthScopeUseCase.Result.Failure.UnknownServerVersion
 
         val result = failure.toLoginError()
 
-        assertIs<LoginResult.Error>(result)
+        assertEquals(LoginResult.Error("Could not determine the server version."), result)
     }
 
     @Test
-    fun givenGenericAuthScopeFailure_whenMappingToLoginError_thenReturnsError() {
+    fun givenGenericAuthScopeFailure_whenMappingToLoginError_thenReturnsGenericMessage() {
         val failure = AutoVersionAuthScopeUseCase.Result.Failure.Generic(CoreFailure.MissingClientRegistration)
 
         val result = failure.toLoginError()
 
-        assertIs<LoginResult.Error>(result)
+        assertEquals(LoginResult.Error("Something went wrong. Please try again."), result)
     }
 
     @Test
@@ -72,8 +71,7 @@ class LoginResultMapperTest {
 
         val result = failure.toLoginError()
 
-        assertIs<LoginResult.Error>(result)
-        assertEquals("Incorrect email or password.", result.message)
+        assertEquals(LoginResult.Error("Incorrect email or password."), result)
     }
 
     @Test
@@ -82,62 +80,61 @@ class LoginResultMapperTest {
 
         val result = failure.toLoginError()
 
-        assertIs<LoginResult.Error>(result)
-        assertEquals("Incorrect email or password.", result.message)
+        assertEquals(LoginResult.Error("Incorrect email or password."), result)
     }
 
     @Test
-    fun givenAccountSuspended_whenMappingAuthenticationFailureToLoginError_thenReturnsError() {
+    fun givenAccountSuspended_whenMappingAuthenticationFailureToLoginError_thenReturnsSuspendedMessage() {
         val failure = AuthenticationResult.Failure.AccountSuspended
 
         val result = failure.toLoginError()
 
-        assertIs<LoginResult.Error>(result)
+        assertEquals(LoginResult.Error("This account has been suspended."), result)
     }
 
     @Test
-    fun givenAccountPendingActivation_whenMappingAuthenticationFailureToLoginError_thenReturnsError() {
+    fun givenAccountPendingActivation_whenMappingAuthenticationFailureToLoginError_thenReturnsPendingActivationMessage() {
         val failure = AuthenticationResult.Failure.AccountPendingActivation
 
         val result = failure.toLoginError()
 
-        assertIs<LoginResult.Error>(result)
+        assertEquals(LoginResult.Error("This account hasn't been activated yet."), result)
     }
 
     @Test
-    fun givenSocketError_whenMappingAuthenticationFailureToLoginError_thenReturnsError() {
+    fun givenSocketError_whenMappingAuthenticationFailureToLoginError_thenReturnsServerUnreachableMessage() {
         val failure = AuthenticationResult.Failure.SocketError
 
         val result = failure.toLoginError()
 
-        assertIs<LoginResult.Error>(result)
+        assertEquals(LoginResult.Error("Could not reach the server. Please try again."), result)
     }
 
     @Test
-    fun givenGenericAuthenticationFailure_whenMappingToLoginError_thenReturnsError() {
+    fun givenGenericAuthenticationFailure_whenMappingToLoginError_thenReturnsGenericMessage() {
         val failure = AuthenticationResult.Failure.Generic(CoreFailure.MissingClientRegistration)
 
         val result = failure.toLoginError()
 
-        assertIs<LoginResult.Error>(result)
+        assertEquals(LoginResult.Error("Something went wrong. Please try again."), result)
     }
 
     @Test
-    fun givenUserAlreadyExists_whenMappingAddAuthenticatedUserFailureToLoginError_thenReturnsError() {
+    fun givenUserAlreadyExists_whenMappingAddAuthenticatedUserFailureToLoginError_thenReturnsAlreadyLoggedInMessage() {
         val failure = AddAuthenticatedUserUseCase.Result.Failure.UserAlreadyExists
 
         val result = failure.toLoginError()
 
-        assertIs<LoginResult.Error>(result)
+        assertEquals(LoginResult.Error("This account is already logged in."), result)
     }
 
     @Test
-    fun givenGenericAddAuthenticatedUserFailure_whenMappingToLoginError_thenReturnsError() {
+    fun givenGenericAddAuthenticatedUserFailure_whenMappingToLoginError_thenReturnsCouldNotSaveSessionMessage() {
         val failure = AddAuthenticatedUserUseCase.Result.Failure.Generic(CoreFailure.MissingClientRegistration)
 
         val result = failure.toLoginError()
 
-        assertIs<LoginResult.Error>(result)
+        assertEquals(LoginResult.Error("Could not save this session. Please try again."), result)
     }
 
     @Test
@@ -146,34 +143,33 @@ class LoginResultMapperTest {
 
         val result = failure.toLoginError()
 
-        assertIs<LoginResult.Error>(result)
-        assertEquals("Incorrect email or password.", result.message)
+        assertEquals(LoginResult.Error("Incorrect email or password."), result)
     }
 
     @Test
-    fun givenTooManyClients_whenMappingRegisterClientFailureToLoginError_thenReturnsError() {
+    fun givenTooManyClients_whenMappingRegisterClientFailureToLoginError_thenReturnsTooManyClientsMessage() {
         val failure = RegisterClientResult.Failure.TooManyClients
 
         val result = failure.toLoginError()
 
-        assertIs<LoginResult.Error>(result)
+        assertEquals(LoginResult.Error("This account already has the maximum number of devices registered."), result)
     }
 
     @Test
-    fun givenPasswordAuthRequired_whenMappingRegisterClientFailureToLoginError_thenReturnsError() {
+    fun givenPasswordAuthRequired_whenMappingRegisterClientFailureToLoginError_thenReturnsPasswordRequiredMessage() {
         val failure = RegisterClientResult.Failure.PasswordAuthRequired
 
         val result = failure.toLoginError()
 
-        assertIs<LoginResult.Error>(result)
+        assertEquals(LoginResult.Error("Please enter your password to register this device."), result)
     }
 
     @Test
-    fun givenGenericRegisterClientFailure_whenMappingToLoginError_thenReturnsError() {
+    fun givenGenericRegisterClientFailure_whenMappingToLoginError_thenReturnsCouldNotRegisterMessage() {
         val failure = RegisterClientResult.Failure.Generic(CoreFailure.MissingClientRegistration)
 
         val result = failure.toLoginError()
 
-        assertIs<LoginResult.Error>(result)
+        assertEquals(LoginResult.Error("Could not register this device. Please try again."), result)
     }
 }

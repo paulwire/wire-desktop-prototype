@@ -25,6 +25,9 @@ dependencies {
     testImplementation(kotlin("test-junit5"))
     testImplementation("com.lemonappdev:konsist:0.17.3")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+    // Needed to reference kalium's Client fixture type (its registrationTime/lastActive fields are
+    // kotlinx.datetime.Instant?), not used directly by our own code. Version matches kalium's pin.
+    testImplementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
 
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.8")
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-rules-libraries:1.23.8")
@@ -73,11 +76,11 @@ kover {
             excludes {
                 packages("com.wire.desktop.ui")
                 classes("*MainKt*")
-                // Orchestrates real Kalium CoreLogic calls (login, client/MLS registration) that
-                // can't be unit tested without a live Kalium session - see issue #12/ADR 0003.
-                // Their success/error mapping logic is deliberately split into LoginResultMapper
-                // precisely so it's testable, and is covered (see LoginResultMapperTest).
-                classes("com.wire.desktop.data.auth.DefaultAuthRepository")
+                // Thin delegation to a real Kalium CoreLogic (login, client/MLS registration) that
+                // can't be unit tested without a live Kalium session - see issue #12/ADR 0003. All
+                // sequencing/branching logic lives in DefaultAuthRepository instead, against the
+                // KaliumAuthGateway interface, and is covered (see DefaultAuthRepositoryTest).
+                classes("com.wire.desktop.data.auth.DefaultKaliumAuthGateway")
                 classes("*AuthRepositoryFactoryKt*")
             }
         }

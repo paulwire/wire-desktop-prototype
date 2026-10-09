@@ -26,5 +26,5 @@ import com.wire.kalium.logic.featureFlags.KaliumConfigs
 fun createAuthRepository(): AuthRepository {
     val rootPath = "${System.getProperty("user.home")}/.wire-desktop-prototype/kalium"
     val coreLogic = CoreLogic(rootPath, KaliumConfigs(), userAgent = "Wire Desktop Prototype/JVM")
-    return DefaultAuthRepository(coreLogic)
+    return DefaultAuthRepository(DefaultKaliumAuthGateway(coreLogic))
 }

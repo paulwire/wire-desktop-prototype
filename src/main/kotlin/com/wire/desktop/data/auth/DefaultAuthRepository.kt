@@ -18,14 +18,10 @@
 
 package com.wire.desktop.data.auth
 
-import com.wire.kalium.logic.CoreLogic
 import com.wire.kalium.logic.configuration.server.ServerConfig
 import com.wire.kalium.logic.data.user.UserId
 import com.wire.kalium.logic.feature.auth.AddAuthenticatedUserUseCase
 import com.wire.kalium.logic.feature.auth.AuthenticationResult
-import com.wire.kalium.logic.feature.auth.AuthenticationScope
-import com.wire.kalium.logic.feature.auth.autoVersioningAuth.AutoVersionAuthScopeUseCase
-import com.wire.kalium.logic.feature.client.RegisterClientParam
 import com.wire.kalium.logic.feature.client.RegisterClientResult
 import com.wire.kalium.logic.feature.server.GetServerConfigResult
 
@@ -34,47 +30,41 @@ import com.wire.kalium.logic.feature.server.GetServerConfigResult
 private const val STAGING_DEEPLINK = "https://staging-nginz-https.zinfra.io/deeplink.json"
 
 // Call sequence confirmed end to end against staging in issue #11's spike (ADR 0003): resolve
-// server config, create an auth scope, log in, persist the account, then register a client - which
-// also completes MLS key-package upload internally, no separate step needed. Split into one
-// single-expression function per step (rather than early returns in one function) to stay under
-// detekt's ReturnCount limit while keeping each step's failure handling next to its own call.
-class DefaultAuthRepository(private val coreLogic: CoreLogic) : AuthRepository {
+// server config, log in, persist the account, then register a client - which also completes MLS
+// key-package upload internally, no separate step needed. Split into one single-expression
+// function per step (rather than early returns in one function) to stay under detekt's ReturnCount
+// limit. All Kalium interaction goes through KaliumAuthGateway, so this sequencing/branching logic
+// is unit-testable against a fake (see DefaultAuthRepositoryTest).
+class DefaultAuthRepository(private val gateway: KaliumAuthGateway) : AuthRepository {
 
     override suspend fun login(email: String, password: String): LoginResult =
-        when (val result = coreLogic.globalScope { fetchServerConfigFromDeepLink(STAGING_DEEPLINK) }) {
+        when (val result = gateway.fetchServerConfig(STAGING_DEEPLINK)) {
             is GetServerConfigResult.Failure -> result.toLoginError()
             is GetServerConfigResult.Success -> continueWithServerLinks(result.serverConfigLinks, email, password)
         }
 
     private suspend fun continueWithServerLinks(serverLinks: ServerConfig.Links, email: String, password: String): LoginResult =
-        when (val result = coreLogic.versionedAuthenticationScope(serverLinks).invoke(null)) {
-            is AutoVersionAuthScopeUseCase.Result.Failure -> result.toLoginError()
-            is AutoVersionAuthScopeUseCase.Result.Success -> continueWithAuthScope(result.authenticationScope, email, password)
-        }
-
-    private suspend fun continueWithAuthScope(authenticationScope: AuthenticationScope, email: String, password: String): LoginResult =
-        when (val result = authenticationScope.login(email, password, shouldPersistClient = true)) {
-            is AuthenticationResult.Failure -> result.toLoginError()
-            is AuthenticationResult.Success -> continueWithLoginSuccess(result, password)
+        when (val result = gateway.login(serverLinks, email, password)) {
+            is LoginAttemptResult.AuthScopeFailure -> result.failure.toLoginError()
+            is LoginAttemptResult.LoginFailure -> result.failure.toLoginError()
+            is LoginAttemptResult.Success -> continueWithLoginSuccess(result.authenticationResult, password)
         }
 
     private suspend fun continueWithLoginSuccess(loginSuccess: AuthenticationResult.Success, password: String): LoginResult =
-        when (
-            val result = coreLogic.globalScope {
-                addAuthenticatedAccount(loginSuccess.serverConfigId, loginSuccess.ssoID, loginSuccess.authData, null, true)
-            }
-        ) {
+        when (val result = gateway.persistAccount(loginSuccess)) {
             is AddAuthenticatedUserUseCase.Result.Failure -> result.toLoginError()
             is AddAuthenticatedUserUseCase.Result.Success -> registerClient(result.userId, password)
         }
 
     private suspend fun registerClient(userId: UserId, password: String): LoginResult =
-        when (
-            val result = coreLogic.sessionScope(userId) {
-                client.getOrRegister(RegisterClientParam(password, emptyList()))
-            }
-        ) {
-            is RegisterClientResult.Success, is RegisterClientResult.E2EICertificateRequired -> LoginResult.Success
+        when (val result = gateway.registerClient(userId, password)) {
+            is RegisterClientResult.Success -> LoginResult.Success
+            // The Proteus client registered, but MLS registration specifically is blocked pending
+            // e2e identity certificate enrollment - not a plain success, since MLS conversations
+            // won't work yet, and not supported by this slice (see issue #12's scope).
+            is RegisterClientResult.E2EICertificateRequired -> LoginResult.Error(
+                "This account requires end-to-end identity certificate enrollment, which isn't supported yet.",
+            )
             is RegisterClientResult.Failure -> result.toLoginError()
         }
 }
