@@ -18,14 +18,14 @@
 
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import com.wire.desktop.data.greeting.DefaultGreetingRepository
-import com.wire.desktop.presentation.main.MainViewModel
-import com.wire.desktop.ui.main.MainScreen
+import com.wire.desktop.data.auth.createAuthRepository
+import com.wire.desktop.presentation.login.LoginViewModel
+import com.wire.desktop.ui.login.LoginScreen
 
 fun main() = application {
-    val viewModel = MainViewModel(DefaultGreetingRepository())
+    val viewModel = LoginViewModel(createAuthRepository())
 
     Window(onCloseRequest = ::exitApplication, title = "Wire Desktop Prototype") {
-        MainScreen(viewModel)
+        LoginScreen(viewModel)
     }
 }
