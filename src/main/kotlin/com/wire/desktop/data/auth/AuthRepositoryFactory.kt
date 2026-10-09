@@ -20,9 +20,6 @@ package com.wire.desktop.data.auth
 
 import com.wire.kalium.logic.CoreLogic
 import com.wire.kalium.logic.featureFlags.KaliumConfigs
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.attribute.PosixFilePermissions
 
 // The only entry point into this package that callers outside `data` (i.e. Main.kt) use - keeps
 // Kalium types from crossing the layer boundary, per AGENTS.md/Konsist's "only data imports kalium".
@@ -31,16 +28,4 @@ fun createAuthRepository(): AuthRepository {
     securePrivateDirectory(rootPath)
     val coreLogic = CoreLogic(rootPath, KaliumConfigs(), userAgent = "Wire Desktop Prototype/JVM")
     return DefaultAuthRepository(DefaultKaliumAuthGateway(coreLogic))
-}
-
-// Kalium's JVM session storage (access/refresh tokens, local DB) isn't encrypted at rest here - it
-// relies on filesystem permissions instead. Restricting the root directory to owner-only is enough
-// to block other local users: without read/execute on this directory, they can't resolve a path to
-// any file inside it, regardless of that file's own permission bits.
-private fun securePrivateDirectory(path: String) {
-    val directory = Path.of(path)
-    Files.createDirectories(directory)
-    if (directory.fileSystem.supportedFileAttributeViews().contains("posix")) {
-        Files.setPosixFilePermissions(directory, PosixFilePermissions.fromString("rwx------"))
-    }
 }

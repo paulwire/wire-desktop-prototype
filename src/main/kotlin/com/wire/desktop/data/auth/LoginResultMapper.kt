@@ -20,12 +20,17 @@ package com.wire.desktop.data.auth
 
 import com.wire.kalium.logic.feature.auth.AddAuthenticatedUserUseCase
 import com.wire.kalium.logic.feature.auth.AuthenticationResult
+import com.wire.kalium.logic.feature.auth.AuthenticationResult.Failure.InvalidCredentials as AuthInvalidCredentials
 import com.wire.kalium.logic.feature.auth.autoVersioningAuth.AutoVersionAuthScopeUseCase
 import com.wire.kalium.logic.feature.client.RegisterClientResult
+import com.wire.kalium.logic.feature.client.RegisterClientResult.Failure.InvalidCredentials as ClientInvalidCredentials
 import com.wire.kalium.logic.feature.server.GetServerConfigResult
 
-// 2FA failures are treated as a generic error rather than an interactive retry flow - out of scope
-// for this slice (see issue #12).
+// 2FA failures map to their own message rather than an interactive retry flow - out of scope for
+// this slice (see issue #12) - but must stay distinct from "wrong password": InvalidCredentials
+// covers both Missing2FA/Invalid2FA (credentials are correct) and InvalidPasswordIdentityCombination
+// (they aren't), so folding them into one message would misreport valid credentials as wrong.
+private const val SECOND_FACTOR_REQUIRED_MESSAGE = "This account requires a two-factor verification code, which isn't supported yet."
 
 internal fun GetServerConfigResult.Failure.toLoginError(): LoginResult.Error =
     LoginResult.Error("Could not reach the server. Please try again.")
@@ -43,7 +48,9 @@ internal fun AutoVersionAuthScopeUseCase.Result.Failure.toLoginError(): LoginRes
 }
 
 internal fun AuthenticationResult.Failure.toLoginError(): LoginResult.Error = when (this) {
-    is AuthenticationResult.Failure.InvalidCredentials, AuthenticationResult.Failure.InvalidUserIdentifier ->
+    AuthInvalidCredentials.Missing2FA, AuthInvalidCredentials.Invalid2FA ->
+        LoginResult.Error(SECOND_FACTOR_REQUIRED_MESSAGE)
+    AuthInvalidCredentials.InvalidPasswordIdentityCombination, AuthenticationResult.Failure.InvalidUserIdentifier ->
         LoginResult.Error("Incorrect email or password.")
     AuthenticationResult.Failure.AccountSuspended ->
         LoginResult.Error("This account has been suspended.")
@@ -63,7 +70,9 @@ internal fun AddAuthenticatedUserUseCase.Result.Failure.toLoginError(): LoginRes
 }
 
 internal fun RegisterClientResult.Failure.toLoginError(): LoginResult.Error = when (this) {
-    is RegisterClientResult.Failure.InvalidCredentials ->
+    ClientInvalidCredentials.Missing2FA, ClientInvalidCredentials.Invalid2FA ->
+        LoginResult.Error(SECOND_FACTOR_REQUIRED_MESSAGE)
+    ClientInvalidCredentials.InvalidPassword ->
         LoginResult.Error("Incorrect email or password.")
     RegisterClientResult.Failure.TooManyClients ->
         LoginResult.Error("This account already has the maximum number of devices registered.")

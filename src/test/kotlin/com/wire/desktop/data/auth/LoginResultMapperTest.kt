@@ -84,6 +84,30 @@ class LoginResultMapperTest {
     }
 
     @Test
+    fun givenMissing2FA_whenMappingAuthenticationFailureToLoginError_thenReturnsSecondFactorMessageNotCredentialsMessage() {
+        val failure = AuthenticationResult.Failure.InvalidCredentials.Missing2FA
+
+        val result = failure.toLoginError()
+
+        assertEquals(
+            LoginResult.Error("This account requires a two-factor verification code, which isn't supported yet."),
+            result,
+        )
+    }
+
+    @Test
+    fun givenInvalid2FA_whenMappingAuthenticationFailureToLoginError_thenReturnsSecondFactorMessageNotCredentialsMessage() {
+        val failure = AuthenticationResult.Failure.InvalidCredentials.Invalid2FA
+
+        val result = failure.toLoginError()
+
+        assertEquals(
+            LoginResult.Error("This account requires a two-factor verification code, which isn't supported yet."),
+            result,
+        )
+    }
+
+    @Test
     fun givenAccountSuspended_whenMappingAuthenticationFailureToLoginError_thenReturnsSuspendedMessage() {
         val failure = AuthenticationResult.Failure.AccountSuspended
 
@@ -144,6 +168,30 @@ class LoginResultMapperTest {
         val result = failure.toLoginError()
 
         assertEquals(LoginResult.Error("Incorrect email or password."), result)
+    }
+
+    @Test
+    fun givenMissing2FA_whenMappingRegisterClientFailureToLoginError_thenReturnsSecondFactorMessageNotCredentialsMessage() {
+        val failure = RegisterClientResult.Failure.InvalidCredentials.Missing2FA
+
+        val result = failure.toLoginError()
+
+        assertEquals(
+            LoginResult.Error("This account requires a two-factor verification code, which isn't supported yet."),
+            result,
+        )
+    }
+
+    @Test
+    fun givenInvalid2FA_whenMappingRegisterClientFailureToLoginError_thenReturnsSecondFactorMessageNotCredentialsMessage() {
+        val failure = RegisterClientResult.Failure.InvalidCredentials.Invalid2FA
+
+        val result = failure.toLoginError()
+
+        assertEquals(
+            LoginResult.Error("This account requires a two-factor verification code, which isn't supported yet."),
+            result,
+        )
     }
 
     @Test
