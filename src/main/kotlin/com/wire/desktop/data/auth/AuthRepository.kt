@@ -16,11 +16,8 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-package com.wire.desktop.presentation.main
+package com.wire.desktop.data.auth
 
-import com.wire.desktop.data.greeting.GreetingRepository
-
-class MainViewModel(private val greetingRepository: GreetingRepository) {
-
-    fun loadGreeting(): String = greetingRepository.greeting()
+interface AuthRepository {
+    suspend fun login(email: String, password: String): LoginResult
 }

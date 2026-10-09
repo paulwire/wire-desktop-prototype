@@ -16,8 +16,11 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-package com.wire.desktop.data.greeting
+package com.wire.desktop.presentation.login
 
-interface GreetingRepository {
-    fun greeting(): String
+sealed interface LoginUiState {
+    data object Idle : LoginUiState
+    data object Loading : LoginUiState
+    data object Success : LoginUiState
+    data class Error(val message: String) : LoginUiState
 }

@@ -18,9 +18,16 @@ repositories {
 dependencies {
     implementation(compose.desktop.currentOs)
     implementation("com.wire.kalium:logic:0.0.1") // version is irrelevant: substituted by settings.gradle.kts
+    // Version matches kalium's own pin (../kalium/gradle/libs.versions.toml) to avoid classpath
+    // conflicts on the shared composite-build graph. Apache-2.0, compatible with this project's GPL-3.0.
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
 
     testImplementation(kotlin("test-junit5"))
     testImplementation("com.lemonappdev:konsist:0.17.3")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+    // Needed to reference kalium's Client fixture type (its registrationTime/lastActive fields are
+    // kotlinx.datetime.Instant?), not used directly by our own code. Version matches kalium's pin.
+    testImplementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
 
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.8")
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-rules-libraries:1.23.8")
@@ -69,6 +76,12 @@ kover {
             excludes {
                 packages("com.wire.desktop.ui")
                 classes("*MainKt*")
+                // Thin delegation to a real Kalium CoreLogic (login, client/MLS registration) that
+                // can't be unit tested without a live Kalium session - see issue #12/ADR 0003. All
+                // sequencing/branching logic lives in DefaultAuthRepository instead, against the
+                // KaliumAuthGateway interface, and is covered (see DefaultAuthRepositoryTest).
+                classes("com.wire.desktop.data.auth.DefaultKaliumAuthGateway")
+                classes("*AuthRepositoryFactoryKt*")
             }
         }
         verify {

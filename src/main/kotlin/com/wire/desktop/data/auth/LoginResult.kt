@@ -16,8 +16,9 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-package com.wire.desktop.data.greeting
+package com.wire.desktop.data.auth
 
-class DefaultGreetingRepository : GreetingRepository {
-    override fun greeting(): String = "Wire Desktop Prototype"
+sealed interface LoginResult {
+    data object Success : LoginResult
+    data class Error(val message: String) : LoginResult
 }

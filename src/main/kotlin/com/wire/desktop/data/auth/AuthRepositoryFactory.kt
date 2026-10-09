@@ -16,19 +16,16 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-package com.wire.desktop.data.greeting
+package com.wire.desktop.data.auth
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.wire.kalium.logic.CoreLogic
+import com.wire.kalium.logic.featureFlags.KaliumConfigs
 
-class DefaultGreetingRepositoryTest {
-
-    @Test
-    fun `greeting returns the expected prototype name`() {
-        val repository = DefaultGreetingRepository()
-
-        val result = repository.greeting()
-
-        assertEquals("Wire Desktop Prototype", result)
-    }
+// The only entry point into this package that callers outside `data` (i.e. Main.kt) use - keeps
+// Kalium types from crossing the layer boundary, per AGENTS.md/Konsist's "only data imports kalium".
+fun createAuthRepository(): AuthRepository {
+    val rootPath = "${System.getProperty("user.home")}/.wire-desktop-prototype/kalium"
+    securePrivateDirectory(rootPath)
+    val coreLogic = CoreLogic(rootPath, KaliumConfigs(), userAgent = "Wire Desktop Prototype/JVM")
+    return DefaultAuthRepository(DefaultKaliumAuthGateway(coreLogic))
 }
